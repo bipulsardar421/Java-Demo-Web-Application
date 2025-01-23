@@ -5,7 +5,9 @@ import java.util.List;
 
 public interface GenericDao<T> {
 
-    T get(int id) throws SQLException;
+    T getByName(String name) throws SQLException;
+
+    T get( int id) throws SQLException;
 
     List<T> getAll() throws SQLException;
 
@@ -16,5 +18,5 @@ public interface GenericDao<T> {
     int update(T t) throws SQLException;
 
     int delete(T t);
-    
+
 }

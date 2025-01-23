@@ -12,6 +12,23 @@ import java.util.List;
 public class LoginImpl implements LoginInterface {
 
     @Override
+    public LoginDto getByName(String name) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        LoginDto ld = null;
+        String qry = "Select id, username, password from login where username = ?";
+        PreparedStatement ps = con.prepareStatement(qry);
+        ps.setString(1, name);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int oid = rs.getInt("id");
+            String uname = rs.getString("username");
+            String pwd = rs.getString("password");
+            ld = new LoginDto(oid, pwd, uname);
+        }
+        return ld;
+    }
+
+    @Override
     public LoginDto get(int id) throws SQLException {
 
         Connection con = JdbcApp.getConnection();
@@ -58,5 +75,7 @@ public class LoginImpl implements LoginInterface {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'delete'");
     }
+
+    
 
 }
