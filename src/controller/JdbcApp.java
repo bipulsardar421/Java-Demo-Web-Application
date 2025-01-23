@@ -6,20 +6,18 @@ import java.sql.SQLException;
 
 public class JdbcApp {
 
-    static String url = "jdbc:mysql://localhost:3306/tt";
+    static String url = "jdbc:mysql://localhost:3306/bipul";
     static String user = "root";
     static String password = "root";
 
-    public static void dbConnection() {
-        try (Connection conn = DriverManager.getConnection(url, user, password)) {
-            if (conn != null) {
-                System.out.println("DB Connected");
-            }
-        } catch (SQLException e) {
-            System.err.println("Error details: " + e.getMessage());
-        }
+    private JdbcApp() {
+
     }
-    public static void main(String[] args) {
-        dbConnection();
+
+    public static Connection getConnection() throws SQLException {
+        Connection connection = null;
+        connection = DriverManager.getConnection(url, user, password);
+        return connection;
     }
+
 }

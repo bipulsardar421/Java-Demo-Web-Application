@@ -1,14 +1,21 @@
 @echo off
-echo Restructuring directories...
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\controller"
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\dao"
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\model"
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\util"
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\webapp\css"
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\webapp\js"
-mkdir "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\webapp\images"
-move "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\JdbcApp.java" "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\controller\JdbcApp.java"
-move "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\dbModel\Login.java" "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\src\model\Login.java"
-move "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\WEB-INF\web.xml" "C:\XAMPP\TOMCAT\WEBAPPS\JDBC-TEST\WEB-INF\web.xml"
-echo Restructuring complete.
-pause
+:: Check if the user provided a directory as an argument
+if "%~1"=="" (
+    echo Usage: %~nx0 ^<directory^>
+    exit /b 1
+)
+
+:: Store the target directory
+set "TARGET_DIR=%~1"
+
+:: Check if the provided argument is a valid directory
+if not exist "%TARGET_DIR%" (
+    echo Error: %TARGET_DIR% is not a valid directory.
+    exit /b 1
+)
+
+echo Displaying directory tree for: %TARGET_DIR%
+echo ----------------------------------------
+
+:: Display the directory tree
+tree "%TARGET_DIR%" /f

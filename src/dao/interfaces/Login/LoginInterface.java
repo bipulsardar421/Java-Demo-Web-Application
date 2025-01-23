@@ -1,5 +1,8 @@
-package dao.interfaces.Login;
+package dao.interfaces.login;
 
-public interface LoginInterface {
+import dao.dto.LoginDto;
+import dao.interfaces.GenericDao;
+
+public interface LoginInterface extends GenericDao<LoginDto> {
 
 }
