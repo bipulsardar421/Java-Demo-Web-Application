@@ -6,6 +6,9 @@
     <title>Document</title>
   </head>
   <body>
-   working...
+    <form action="login" method="post">
+      <input type="text" name="username" />
+      <input type="submit" />
+    </form>
   </body>
 </html>

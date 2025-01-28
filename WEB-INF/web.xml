@@ -1,10 +1,12 @@
 <web-app>
     <servlet>
         <servlet-name>indexServlet</servlet-name>
-        <jsp-file>/index.jsp</jsp-file>
+        <jsp-file>/WEB-INF/index.jsp</jsp-file>
     </servlet>
     <servlet-mapping>
         <servlet-name>indexServlet</servlet-name>
         <url-pattern>/index</url-pattern>
     </servlet-mapping>
+
+    
 </web-app>

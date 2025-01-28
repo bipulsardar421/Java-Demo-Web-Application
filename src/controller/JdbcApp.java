@@ -10,6 +10,13 @@ public class JdbcApp {
     static String user = "root";
     static String password = "root";
 
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+        } catch (ClassNotFoundException e) {
+        }
+    }
+    
     private JdbcApp() {
 
     }
