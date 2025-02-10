@@ -29,7 +29,7 @@ public class LoginServlet extends HttpServlet {
             if(LoginHelper.compareHash(pwd, dataTransObj.getPassword())){
               out.println("Found");  
             }else{
-                out.println("F U");
+                out.println("Not Found");
             }
         } catch (SQLException e) {
             e.printStackTrace();
