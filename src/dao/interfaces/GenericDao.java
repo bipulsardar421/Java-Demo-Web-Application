@@ -1,15 +1,18 @@
 package dao.interfaces;
 
+import dto.login.LoginDto;
 import java.sql.SQLException;
-import java.util.List;
+
+import org.json.JSONArray;
+
 
 public interface GenericDao<T> {
 
-    T getByName(String name) throws SQLException;
+    LoginDto getByName(String name) throws SQLException;
 
-    T get( int id) throws SQLException;
+    JSONArray get( int id) throws SQLException;
 
-    List<T> getAll() throws SQLException;
+    JSONArray getAll() throws SQLException;
 
     int save(T t) throws SQLException;
 
