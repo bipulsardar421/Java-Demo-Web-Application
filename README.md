@@ -25,7 +25,7 @@ Once in CMD your path looks like this C:\xampp\tomcat\webapps\Java-Demo-Web-Appl
 The build. bat is a batch file containing all the instruction to build the project, if you want to do it manually then, put this line in the cmd
 ->>> cd src\dbmodel\login
 then
-->>> javac -d "../../../WEB-INF/classes" -cp "../../../lib/*;../../../src" LoginDBmodel.java
+->>> javac -d "../../WEB-INF/classes" -cp "../../lib/*;../../src" *.java
 This command will store the class file to the classes folder in the WEB-INF.
 
 
@@ -45,4 +45,5 @@ Create a login table with these attribute {id (int), username(varchar), password
 # Use Browser to test
 
 Open this url -> http://localhost:8080/Java-Demo-Web-Application/index
+Currently if it doesn't work check the code once again I may have updated few servlets
 Give the User Name in the input box and click the button
