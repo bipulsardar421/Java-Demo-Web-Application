@@ -11,7 +11,7 @@ import controller.JdbcApp;
 import dao.interfaces.login.LoginInterface;
 import dto.login.LoginDto;
 import helper.LoginHelper;
-import resultset_handler.JsonResultset;
+import handler.resultset_handler.JsonResultset;
 
 public class LoginDao implements LoginInterface {
 
