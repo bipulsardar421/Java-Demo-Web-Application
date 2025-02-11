@@ -16,26 +16,31 @@ import dao.LoginDao;
 import dao.interfaces.login.LoginInterface;
 import dto.login.LoginDto;
 import helper.LoginHelper;
+import response_handler.ResponseHandler;
 
-@WebServlet("/login")
-public class LoginServlet extends HttpServlet {
+@WebServlet("/signup")
+public class SignUpServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
         HttpSession session = req.getSession();
         PrintWriter out = res.getWriter();
         String uname = req.getParameter("username") + "";
         String pwd = req.getParameter("password") + "";
+        String role = req.getParameter("role") + "";
         try {
             LoginInterface loginInterface = new LoginDao();
             LoginDto dataTransObj = loginInterface.getByName(uname);
-            if (LoginHelper.compareHash(pwd, dataTransObj.getPassword())) {
-                if (dataTransObj.getRole().equalsIgnoreCase("admin")) {
-                    session.setAttribute("role", "admin");
-                }else{
-                    session.setAttribute("role", "vendor");
+            if (dataTransObj == null) {
+                LoginDto ld = new LoginDto(0, uname, pwd, role);
+                int i = loginInterface.insert(ld);
+                if (i > 0) {
+                    ResponseHandler.sendJsonResponse(res, "success", "Account Created");
+                } else {
+                    out.println("Not Done");
                 }
+
             } else {
-                out.println("Not Found");
+                out.println("fu");
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -6,7 +6,7 @@ set CLASSPATH=.;.\lib\servlet-api.jar;..\src;%CLASSPATH%
 
 cd src\servlet
 
-javac -d "../../WEB-INF/classes" -cp "../../lib/*;../../src" LoginServlet.java
+javac -d "../../WEB-INF/classes" -cp "../../lib/*;../../src" *.java
 
 cd ..\..\..\
 
