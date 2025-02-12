@@ -6,11 +6,12 @@ import java.sql.SQLException;
 import org.json.JSONArray;
 
 
+
 public interface GenericDao<T> {
 
-    LoginDto getByName(String name) throws SQLException;
+    T getByName(String name) throws SQLException;
 
-    JSONArray get( int id) throws SQLException;
+    T get( int id) throws SQLException;
 
     JSONArray getAll() throws SQLException;
 

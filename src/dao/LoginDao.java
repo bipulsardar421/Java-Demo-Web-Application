@@ -7,6 +7,7 @@ import java.sql.SQLException;
 
 import org.json.JSONArray;
 
+
 import controller.JdbcApp;
 import dao.interfaces.login.LoginInterface;
 import dto.login.LoginDto;
@@ -34,7 +35,7 @@ public class LoginDao implements LoginInterface {
     }
 
     @Override
-    public JSONArray get(int id) throws SQLException {
+    public LoginDto get(int id) throws SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'get'");
     }

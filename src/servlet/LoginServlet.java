@@ -41,6 +41,7 @@ public class LoginServlet extends HttpServlet {
                 ResponseHandler.sendJsonResponse(res, "fail", "Invalid credentials");
             }
 
+
         } catch (SQLException e) {
             e.printStackTrace();
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());

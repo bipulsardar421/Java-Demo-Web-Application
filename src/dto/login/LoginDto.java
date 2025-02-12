@@ -1,5 +1,9 @@
 package dto.login;
 
+import handler.resultset_handler.JsonResultset;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
 public class LoginDto {
     
     int id;
@@ -12,6 +16,14 @@ public class LoginDto {
         this.username = username;
         this.password = password;
         this.role = role;
+    }
+
+    public LoginDto(ResultSet rs){
+        try {
+            JsonResultset.convertToJson(rs);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
     public int getId() {
