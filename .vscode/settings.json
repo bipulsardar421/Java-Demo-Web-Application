@@ -5,7 +5,7 @@
     "java.project.sourcePaths": ["src"],
     "java.project.outputPath": "bin",
     "java.completion.favoriteStaticMembers": [
-
+      "org.json.*",
       "org.junit.Assert.*",
       "org.junit.Assume.*",
       "org.junit.jupiter.api.Assertions.*",
