@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import dao.LoginDao;
-import dao.interfaces.login.LoginInterface;
+import dao.interfaces.LoginInterface;
 import dto.login.LoginDto;
 import handler.response_handler.ResponseHandler;
 

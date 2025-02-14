@@ -1,4 +1,4 @@
-package dao.interfaces;
+package dao.GenericDao;
 
 import dto.login.LoginDto;
 import java.sql.SQLException;
@@ -21,6 +21,6 @@ public interface GenericDao<T> {
 
     int update(T t) throws SQLException;
 
-    int delete(T t);
+    int delete(T t) throws SQLException;
 
 }

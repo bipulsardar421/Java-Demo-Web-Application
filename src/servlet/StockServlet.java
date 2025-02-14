@@ -1,15 +1,17 @@
 package servlet;
 
+import handler.fileUpload_handler.UploadHandler;
 import handler.response_handler.ResponseHandler;
 import java.io.IOException;
 import java.sql.SQLException;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import dao.StockDao;
-import dao.interfaces.login.StockInterface;
+import dao.interfaces.StockInterface;
 import dto.stock.stockDto;
 import handler.resultset_handler.JsonResultset;
 import java.sql.Date;
@@ -17,9 +19,15 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024 * 2,
+        maxFileSize = 1024 * 1024 * 10,
+        maxRequestSize = 1024 * 1024 * 50
+)
 @WebServlet("/stock/*")
 public class StockServlet extends HttpServlet {
 
+    private static final String UPLOAD_DIR = "products";
     private static final Logger LOGGER = Logger.getLogger(StockServlet.class.getName());
     private final StockInterface stInt = new StockDao();
 
@@ -67,13 +75,13 @@ public class StockServlet extends HttpServlet {
         }
     }
 
-    private void handleAddOrUpdateStock(HttpServletRequest request, HttpServletResponse response, boolean isUpdate) throws IOException {
+    private void handleAddOrUpdateStock(HttpServletRequest request, HttpServletResponse response, boolean isUpdate) throws IOException, ServletException {
         try {
             int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
             String pname = Optional.ofNullable(request.getParameter("product_name")).orElseThrow(() -> new IllegalArgumentException("Missing 'product_name'"));
             int qty = Integer.parseInt(request.getParameter("quantity"));
             int rate = Integer.parseInt(request.getParameter("rate"));
-            String img = Optional.ofNullable(request.getParameter("product_image")).orElse("");
+            String img = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
             Date recievedDate = Date.valueOf(request.getParameter("recieved_date"));
 
             stockDto stock = new stockDto(id, pname, qty, rate, recievedDate, img, "active");

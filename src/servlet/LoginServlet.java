@@ -9,7 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import dao.LoginDao;
-import dao.interfaces.login.LoginInterface;
+import dao.interfaces.LoginInterface;
 import dto.login.LoginDto;
 import helper.LoginHelper;
 import handler.response_handler.ResponseHandler;

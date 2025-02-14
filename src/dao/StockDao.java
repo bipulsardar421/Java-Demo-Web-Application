@@ -9,10 +9,12 @@ import org.json.JSONArray;
 import java.sql.ResultSet;
 
 import controller.JdbcApp;
-import dao.interfaces.login.StockInterface;
+import dao.interfaces.StockInterface;
 import dto.stock.stockDto;
 import handler.resultset_handler.JsonResultset;
+import java.sql.Timestamp;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 public class StockDao implements StockInterface {
 
@@ -66,15 +68,20 @@ public class StockDao implements StockInterface {
         ps.setInt(3, t.getRate());
         ps.setDate(4, t.getR_date());
         ps.setString(5, t.getImg());
-        ps.setDate(6, Date.valueOf(LocalDate.now()));
+        ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));
         ps.setInt(7, t.getPid());
         int result = ps.executeUpdate();
         return result;
     }
 
     @Override
-    public int delete(stockDto t) {
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+    public int delete(stockDto t) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String qry = "UPDATE stock SET status = 'inactive' WHERE product_id = ?";
+        PreparedStatement ps = con.prepareStatement(qry);
+        ps.setInt(1, t.getPid());
+        int result = ps.executeUpdate();
+        return result;
     }
 
     @Override

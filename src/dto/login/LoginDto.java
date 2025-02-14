@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class LoginDto {
-    
+
     int id;
     String username;
     String password;
@@ -18,11 +18,11 @@ public class LoginDto {
         this.role = role;
     }
 
-    public LoginDto(ResultSet rs){
+    public LoginDto(ResultSet rs) {
         try {
             JsonResultset.convertToJson(rs);
         } catch (SQLException ex) {
-            ex.printStackTrace();
+            ex.getMessage();
         }
     }
 
@@ -63,5 +63,4 @@ public class LoginDto {
         return "LoginDto [id=" + id + ", username=" + username + ", password=" + password + ", role=" + role + "]";
     }
 
-    
 }

@@ -7,9 +7,8 @@ import java.sql.SQLException;
 
 import org.json.JSONArray;
 
-
 import controller.JdbcApp;
-import dao.interfaces.login.LoginInterface;
+import dao.interfaces.LoginInterface;
 import dto.login.LoginDto;
 import helper.LoginHelper;
 import handler.resultset_handler.JsonResultset;
@@ -35,24 +34,12 @@ public class LoginDao implements LoginInterface {
     }
 
     @Override
-    public LoginDto get(int id) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'get'");
-    }
-
-    @Override
     public JSONArray getAll() throws SQLException {
         Connection con = JdbcApp.getConnection();
         String qry = "Select * from login";
         PreparedStatement ps = con.prepareStatement(qry);
         ResultSet rs = ps.executeQuery();
         return JsonResultset.convertToJson(rs);
-    }
-
-    @Override
-    public int save(LoginDto t) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'save'");
     }
 
     @Override
@@ -68,6 +55,12 @@ public class LoginDao implements LoginInterface {
     }
 
     @Override
+    public int save(LoginDto t) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'save'");
+    }
+
+    @Override
     public int update(LoginDto t) throws SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'update'");
@@ -77,6 +70,12 @@ public class LoginDao implements LoginInterface {
     public int delete(LoginDto t) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'delete'");
+    }
+
+    @Override
+    public LoginDto get(int id) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
 
 }

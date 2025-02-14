@@ -1,6 +1,6 @@
-package dao.interfaces.login;
+package dao.interfaces;
 
-import dao.interfaces.GenericDao;
+import dao.GenericDao.GenericDao;
 import dto.stock.stockDto;
 
 public interface StockInterface extends GenericDao<stockDto>{
