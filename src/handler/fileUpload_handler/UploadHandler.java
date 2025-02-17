@@ -3,6 +3,7 @@ package handler.fileUpload_handler;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import javax.servlet.ServletContext;
@@ -15,9 +16,11 @@ public class UploadHandler {
     public static String uploadFile(String UPLOAD_DIR, HttpServletRequest request, ServletContext servletContext)
             throws ServletException, IOException {
         Part filePart = request.getPart("image");
+
         if (filePart == null || filePart.getSubmittedFileName().isEmpty()) {
-            return "No file uploaded!";
+            return "No file Uploaded";
         }
+
         String originalFileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
         String uniqueFileName = System.currentTimeMillis() + "_" + originalFileName;
         String uploadPath = servletContext.getRealPath("/") + "images/" + UPLOAD_DIR;
@@ -39,20 +42,29 @@ public class UploadHandler {
         String fileUrl = domain + contextPath + "/images/" + UPLOAD_DIR + "/" + uniqueFileName;
         return fileUrl;
     }
-    public static String deleteFile(String UPLOAD_DIR, String fileName, ServletContext servletContext) {
-        String filePath = servletContext.getRealPath("/") + "images/" + UPLOAD_DIR + "/" + fileName;
-        File file = new File(filePath);
-    
-        if (file.exists()) {
-            if (file.delete()) {
-                return "File deleted successfully: " + fileName;
+
+    public static String deleteFile(String url, ServletContext servletContext) {
+        try {
+            URI uri = new URI(url);
+            String filePath = uri.getPath();
+            System.out.println("Extracted file path: " + filePath);
+            String relativePath = filePath.substring(filePath.indexOf("/images/"));
+            System.out.println("Relative path: " + relativePath);
+            String uploadPath = servletContext.getRealPath("/") + relativePath;
+            System.out.println("Full file path to delete: " + uploadPath);
+            File file = new File(uploadPath);
+            if (file.exists()) {
+                if (file.delete()) {
+                    return "File deleted successfully";
+                } else {
+                    return "Failed to delete file";
+                }
             } else {
-                return "Failed to delete file: " + fileName;
+                return "File not found";
             }
-        } else {
-            return "File not found: " + fileName;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error: " + e.getMessage();
         }
     }
-    
-
 }

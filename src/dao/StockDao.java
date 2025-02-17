@@ -74,6 +74,20 @@ public class StockDao implements StockInterface {
         return result;
     }
 
+    public String getImageName(int id) throws SQLException {
+        String img = "";
+        String query = "SELECT image FROM stock WHERE product_id = ?";
+        try (Connection con = JdbcApp.getConnection(); PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    img = rs.getString("image");
+                }
+            }
+        }
+        return img;
+    }
+
     @Override
     public int delete(stockDto t) throws SQLException {
         Connection con = JdbcApp.getConnection();

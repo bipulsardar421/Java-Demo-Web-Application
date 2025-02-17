@@ -1,6 +1,7 @@
 package servlet;
 
 import handler.fileUpload_handler.UploadHandler;
+import handler.request_handler.RequestHandler;
 import handler.response_handler.ResponseHandler;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -10,6 +11,9 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
+
+import dao.StockDao;
 import dao.UserDetailsDao;
 import dao.interfaces.UserDetailsInterface;
 import dto.user_details.UserDetailsDto;
@@ -84,7 +88,26 @@ public class UserDetailsServlet extends HttpServlet {
             String username = Optional.ofNullable(request.getParameter("user_name")).orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
             int phone = Integer.parseInt(request.getParameter("phone"));
             String address = Optional.ofNullable(request.getParameter("address")).orElse("");
-            String image = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
+            String image = null;
+            if (RequestHandler.isMultipart(request)) {
+                Part filePart = request.getPart("image");
+
+                if (filePart != null && filePart.getSize() > 0 && filePart.getSubmittedFileName() != null) {
+                    if (isUpdate) {
+                        UserDetailsDao sd = new UserDetailsDao();
+                        String imageName = sd.getImageName(id);
+                        UploadHandler.deleteFile(imageName, getServletContext());
+                    }
+                    image = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
+                } else {
+                    String existingImage = request.getParameter("image");
+                    if (existingImage != null && !existingImage.isEmpty()) {
+                        image = existingImage;
+                    }
+                }
+            } else {
+                image = request.getParameter("image");
+            }
             String status = Optional.ofNullable(request.getParameter("status")).orElse("active");
 
             UserDetailsDto user = new UserDetailsDto(id, userId, username, phone, address, image, status, Timestamp.valueOf(LocalDateTime.now()));

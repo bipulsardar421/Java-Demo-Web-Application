@@ -1,6 +1,8 @@
 package servlet;
 
+import com.sun.net.httpserver.Request;
 import handler.fileUpload_handler.UploadHandler;
+import handler.request_handler.RequestHandler;
 import handler.response_handler.ResponseHandler;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -18,6 +20,8 @@ import java.sql.Date;
 import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import javax.servlet.http.Part;
 
 @MultipartConfig(
         fileSizeThreshold = 1024 * 1024 * 2,
@@ -77,16 +81,34 @@ public class StockServlet extends HttpServlet {
 
     private void handleAddOrUpdateStock(HttpServletRequest request, HttpServletResponse response, boolean isUpdate) throws IOException, ServletException {
         try {
+
             int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
             String pname = Optional.ofNullable(request.getParameter("product_name")).orElseThrow(() -> new IllegalArgumentException("Missing 'product_name'"));
             int qty = Integer.parseInt(request.getParameter("quantity"));
             int rate = Integer.parseInt(request.getParameter("rate"));
-            String img = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
             Date recievedDate = Date.valueOf(request.getParameter("recieved_date"));
+            String image = null;
+            if (RequestHandler.isMultipart(request)) {
+                Part filePart = request.getPart("image");
 
-            stockDto stock = new stockDto(id, pname, qty, rate, recievedDate, img, "active");
+                if (filePart != null && filePart.getSize() > 0 && filePart.getSubmittedFileName() != null) {
+                    if (isUpdate) {
+                        StockDao sd = new StockDao();
+                        String imageName = sd.getImageName(id);
+                        UploadHandler.deleteFile(imageName, getServletContext());
+                    }
+                    image = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
+                } else {
+                    String existingImage = request.getParameter("image");
+                    if (existingImage != null && !existingImage.isEmpty()) {
+                        image = existingImage;
+                    }
+                }
+            } else {
+                image = request.getParameter("image");
+            }
+            stockDto stock = new stockDto(id, pname, qty, rate, recievedDate, image, "active");
             int result = isUpdate ? stInt.update(stock) : stInt.insert(stock);
-
             if (result > 0) {
                 ResponseHandler.sendJsonResponse(response, "Success", isUpdate ? "Updated Successfully" : "Added Successfully");
             } else {
@@ -95,6 +117,7 @@ public class StockServlet extends HttpServlet {
         } catch (NumberFormatException e) {
             ResponseHandler.sendJsonResponse(response, "Error", "Invalid number format in request parameters");
         } catch (IllegalArgumentException | SQLException e) {
+
             ResponseHandler.sendJsonResponse(response, "Error", e.getMessage());
         }
     }

@@ -61,7 +61,7 @@ public class UserDetailsDao implements UserDetailsInterface {
     @Override
     public int update(UserDetailsDto t) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String qry = "UPDATE user_details SET user_name = ?, phone = ?, address = ?, image = ?, status = ?, updatedAt = ? WHERE user_id = ?";
+        String qry = "UPDATE user_details SET user_name = ?, phone = ?, address = ?, image = ?, status = ?, updatedAt = ? WHERE id = ?";
         PreparedStatement ps = con.prepareStatement(qry);
         ps.setString(1, t.getUser_name());
         ps.setInt(2, t.getPhone());
@@ -80,6 +80,20 @@ public class UserDetailsDao implements UserDetailsInterface {
         PreparedStatement ps = con.prepareStatement(qry);
         ps.setInt(1, t.getUser_id());
         return ps.executeUpdate();
+    }
+
+    public String getImageName(int id) throws SQLException {
+        String img = "";
+        String query = "SELECT image FROM user_details WHERE id = ?";
+        try (Connection con = JdbcApp.getConnection(); PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    img = rs.getString("image");
+                }
+            }
+        }
+        return img;
     }
 
     @Override

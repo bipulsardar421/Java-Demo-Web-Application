@@ -1,18 +1,12 @@
-// package handler.request_handler;
-// import controller.JdbcApp;
-// import java.sql.Connection;
-// import java.sql.PreparedStatement;
-// import java.sql.ResultSet;
-// import java.sql.SQLException;
-// import java.util.List;
+package handler.request_handler;
 
-// import org.json.JSONArray;
+import javax.servlet.http.HttpServletRequest;
 
-// public class RequestHandler {
+public class RequestHandler {
 
-    
-// NTS(BIPUL): For future implementation
+    public static boolean isMultipart(HttpServletRequest request) {
+        String contentType = request.getContentType();
+        return contentType != null && contentType.toLowerCase().startsWith("multipart/");
+    }
 
-// }
-
-
+}
