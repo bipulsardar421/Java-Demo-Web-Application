@@ -49,7 +49,7 @@ public class LoginDao implements LoginInterface {
         String qry = "INSERT INTO login (username, password, role) VALUES (?, ?, ?)";
         int generatedId = -1;
         try (Connection con = JdbcApp.getConnection();
-             PreparedStatement ps = con.prepareStatement(qry, Statement.RETURN_GENERATED_KEYS)) {
+                PreparedStatement ps = con.prepareStatement(qry, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, t.getUsername());
             ps.setString(2, LoginHelper.hashString(t.getPassword()));
             ps.setString(3, t.getRole());
@@ -64,18 +64,67 @@ public class LoginDao implements LoginInterface {
         }
         return generatedId;
     }
-    
+
+    public int otp(int user_id, String otp) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        PreparedStatement ps = con.prepareStatement("insert into otpvalidation(user_id, otp) value (?,?)");
+        ps.setInt(1, user_id);
+        ps.setString(2, otp);
+        return ps.executeUpdate();
+    }
+
+    public boolean checkOtp(int user_id, String otp) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        PreparedStatement ps = con.prepareStatement("select status from otpvalidation where user_id = ? and otp = ?");
+        ps.setInt(1, user_id);
+        ps.setString(2, otp);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next() && rs.getString("status").equals("active")) {
+            return true;
+        } else
+            return false;
+    }
+
+    public boolean getOtp(int user_id, String secret) throws SQLException {
+        String selectQuery = "SELECT id, otp FROM otpvalidation WHERE user_id = ? AND status = 'active'";
+        String updateQuery = "UPDATE otpvalidation SET status = 'inactive' WHERE id = ?";
+        try (Connection con = JdbcApp.getConnection();
+                PreparedStatement ps = con.prepareStatement(selectQuery)) {
+            ps.setInt(1, user_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    String otp = rs.getString("otp");
+                    if (otp != null && LoginHelper.compareHash(otp, secret)) {
+                        try (PreparedStatement updatePs = con.prepareStatement(updateQuery)) {
+                            updatePs.setInt(1, rs.getInt("id"));
+                            System.out.println(rs.getInt("id"));
+                            updatePs.executeUpdate();
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public int update(LoginDto t) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        PreparedStatement ps = con.prepareStatement("update login set password = ? where id = ?");
+        ps.setString(1, t.getPassword());
+        ps.setInt(2, t.getId());
+        int result = ps.executeUpdate();
+        if (result > 0) {
+            return result;
+        } else
+            return 0;
+    }
 
     @Override
     public int save(LoginDto t) throws SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'save'");
-    }
-
-    @Override
-    public int update(LoginDto t) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
     }
 
     @Override

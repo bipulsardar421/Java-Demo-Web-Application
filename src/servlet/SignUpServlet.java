@@ -1,7 +1,6 @@
 package servlet;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.SQLException;
 
 import javax.servlet.annotation.MultipartConfig;
@@ -37,7 +36,7 @@ public class SignUpServlet extends HttpServlet {
             return;
         }
 
-        try (PrintWriter out = res.getWriter()) {
+        try {
             LoginInterface loginInterface = new LoginDao();
             LoginDto existingUser = loginInterface.getByName(uname);
 

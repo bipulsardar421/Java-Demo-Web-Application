@@ -43,7 +43,7 @@ public class MailSenderHandler {
         mimeMessage.addRecipient(Message.RecipientType.TO, new InternetAddress(this.emailReceipients));
         mimeMessage.setSubject(this.emailSubject);
         MimeBodyPart bodyPart = new MimeBodyPart();
-        bodyPart.setContent(this.emailBody, "html/text");
+        bodyPart.setContent(this.emailBody, "text/html");
         MimeMultipart multiPart = new MimeMultipart();
         multiPart.addBodyPart(bodyPart);
         mimeMessage.setContent(multiPart);

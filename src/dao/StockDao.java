@@ -1,7 +1,6 @@
 package dao;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -13,7 +12,6 @@ import dao.interfaces.StockInterface;
 import dto.stock.stockDto;
 import handler.resultset_handler.JsonResultset;
 import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class StockDao implements StockInterface {

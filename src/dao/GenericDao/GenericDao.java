@@ -1,6 +1,5 @@
 package dao.GenericDao;
 
-import dto.login.LoginDto;
 import java.sql.SQLException;
 
 import org.json.JSONArray;

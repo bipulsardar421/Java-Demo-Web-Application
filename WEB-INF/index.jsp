@@ -3,12 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Bipul's Project</title>
   </head>
   <body>
-    <form action="login" method="post">
-      <input type="text" name="username" />
-      <input type="submit" />
-    </form>
+    Server is working !!!
   </body>
 </html>

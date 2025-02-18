@@ -1,6 +1,5 @@
 package servlet;
 
-import com.sun.net.httpserver.Request;
 import handler.fileUpload_handler.UploadHandler;
 import handler.request_handler.RequestHandler;
 import handler.response_handler.ResponseHandler;
