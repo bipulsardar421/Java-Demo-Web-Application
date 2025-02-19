@@ -19,9 +19,7 @@ CREATE TABLE invoice_item (
     product_id INT NOT NULL,
     quantity INT NOT NULL,
     unit_price DECIMAL(10,2) NOT NULL,
-    total_price DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (invoice_id) REFERENCES invoice(invoice_id) ON DELETE CASCADE,
-    FOREIGN KEY (product_id) REFERENCES stock(product_id) ON DELETE CASCADE
+    total_price DECIMAL(10,2) NOT NULL
 );
 
 INSERT INTO invoice (customer_name, customer_contact, total_amount, discount, tax, grand_total, payment_status, payment_method, notes)

@@ -1,7 +1,9 @@
 package dao;
 
 import dao.interfaces.InvoiceInterface;
+import dao.interfaces.InvoiceItemInterface;
 import dto.invoice.InvoiceDto;
+import handler.resultset_handler.JsonResultset;
 
 import java.sql.*;
 import org.json.JSONArray;
@@ -9,21 +11,36 @@ import org.json.JSONObject;
 
 import controller.JdbcApp;
 
-public class InvoiceDao implements InvoiceInterface {
+public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<InvoiceDto> {
 
-    @Override
-    public InvoiceDto getByName(String name) throws SQLException {
+    public JSONArray search(int searchInvoice) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "SELECT * FROM invoice WHERE customer_name = ?";
+        String query = "SELECT * FROM invoice WHERE invoice_id = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setString(1, name);
+            stmt.setInt(1,  searchInvoice );
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return mapRowToInvoiceDto(rs);
+                JSONArray invoiceJsonArray = JsonResultset.convertToJson(rs);
+                for (int i = 0; i < invoiceJsonArray.length(); i++) {
+                    JSONObject invoiceObject = invoiceJsonArray.getJSONObject(i);
+                    int invoiceId = invoiceObject.getInt("invoice_id");
+                    JSONArray items = invoiceRecord(invoiceId);
+                    invoiceObject.put("items", items);
                 }
+                System.out.println(invoiceJsonArray);
+                return invoiceJsonArray;
             }
         }
-        return null;
+    }
+
+    public JSONArray invoiceRecord(int invoiceId) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String query = "SELECT * FROM invoice_item WHERE invoice_id = ?";
+        try (PreparedStatement ps = con.prepareStatement(query)) {
+            ps.setInt(1, invoiceId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return JsonResultset.convertToJson(rs);
+            }
+        }
     }
 
     @Override
@@ -34,7 +51,7 @@ public class InvoiceDao implements InvoiceInterface {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return mapRowToInvoiceDto(rs);
+                    return new InvoiceDto(rs);
                 }
             }
         }
@@ -44,40 +61,35 @@ public class InvoiceDao implements InvoiceInterface {
     @Override
     public JSONArray getAll() throws SQLException {
         Connection con = JdbcApp.getConnection();
-        JSONArray invoicesArray = new JSONArray();
         String query = "SELECT * FROM invoice";
         try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
-                JSONObject invoiceJson = new JSONObject();
-                invoiceJson.put("id", rs.getInt("id"));
-                invoiceJson.put("customer_name", rs.getString("customer_name"));
-                invoiceJson.put("total_amount", rs.getDouble("total_amount"));
-                invoiceJson.put("payment_method", rs.getString("payment_method"));
-                invoiceJson.put("notes", rs.getString("notes"));
-                invoiceJson.put("invoice_date", rs.getDate("invoice_date"));
-                invoiceJson.put("created_at", rs.getTimestamp("created_at"));
-                invoicesArray.put(invoiceJson);
+                return JsonResultset.convertToJson(rs);
             }
         }
-        return invoicesArray;
+        return null;
     }
 
     @Override
     public int save(InvoiceDto invoice) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "INSERT INTO invoice (customer_name, total_amount, payment_method, notes, invoice_date) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO invoice (customer_name, customer_contact, invoice_date, total_amount, discount, tax, grand_total, payment_status, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, invoice.getCustomerName());
-            stmt.setDouble(2, invoice.getTotalAmount());
-            stmt.setString(3, invoice.getPaymentMethod());
-            stmt.setString(4, invoice.getNotes());
-            stmt.setDate(5, Date.valueOf(invoice.getInvoiceDate()));
-
+            stmt.setInt(2, invoice.getCustomer_contact());
+            stmt.setDate(3, invoice.getInvoiceDate());
+            stmt.setDouble(4, invoice.getTotalAmount());
+            stmt.setDouble(5, invoice.getDiscount());
+            stmt.setDouble(6, invoice.getTax());
+            stmt.setDouble(7, invoice.getGrand_total());
+            stmt.setString(8, invoice.getPayment_status());
+            stmt.setString(9, invoice.getPaymentMethod());
+            stmt.setString(10, invoice.getNotes());
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
                     if (generatedKeys.next()) {
-                        return generatedKeys.getInt(1); // Return the generated ID
+                        return generatedKeys.getInt(1);
                     }
                 }
             }
@@ -87,22 +99,25 @@ public class InvoiceDao implements InvoiceInterface {
 
     @Override
     public int insert(InvoiceDto invoice) throws SQLException {
-        Connection con = JdbcApp.getConnection();
-        return save(invoice); // Same as save, so we can reuse the same method
+        return save(invoice);
     }
 
     @Override
     public int update(InvoiceDto invoice) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "UPDATE invoice SET customer_name = ?, total_amount = ?, payment_method = ?, notes = ?, invoice_date = ? WHERE id = ?";
+        String query = "UPDATE invoice SET customer_name = ?, customer_contact = ?, invoice_date = ?, total_amount = ?, discount = ?, tax = ?, grand_total = ?, payment_status = ?, payment_method = ?, notes = ? WHERE id = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, invoice.getCustomerName());
-            stmt.setDouble(2, invoice.getTotalAmount());
-            stmt.setString(3, invoice.getPaymentMethod());
-            stmt.setString(4, invoice.getNotes());
-            stmt.setDate(5, Date.valueOf(invoice.getInvoiceDate()));
-            stmt.setInt(6, invoice.getId());
-
+            stmt.setInt(2, invoice.getCustomer_contact());
+            stmt.setDate(3, invoice.getInvoiceDate());
+            stmt.setDouble(4, invoice.getTotalAmount());
+            stmt.setDouble(5, invoice.getDiscount());
+            stmt.setDouble(6, invoice.getTax());
+            stmt.setDouble(7, invoice.getGrand_total());
+            stmt.setString(8, invoice.getPayment_status());
+            stmt.setString(9, invoice.getPaymentMethod());
+            stmt.setString(10, invoice.getNotes());
+            stmt.setInt(11, invoice.getId());
             return stmt.executeUpdate();
         }
     }
@@ -117,16 +132,33 @@ public class InvoiceDao implements InvoiceInterface {
         }
     }
 
-    private InvoiceDto mapRowToInvoiceDto(ResultSet rs) throws SQLException {
-        Connection con = JdbcApp.getConnection();
-        InvoiceDto invoice = new InvoiceDto();
-        invoice.setId(rs.getInt("id"));
-        invoice.setCustomerName(rs.getString("customer_name"));
-        invoice.setTotalAmount(rs.getDouble("total_amount"));
-        invoice.setPaymentMethod(rs.getString("payment_method"));
-        invoice.setNotes(rs.getString("notes"));
-        invoice.setInvoiceDate(rs.getDate("invoice_date").toLocalDate());
-        invoice.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-        return invoice;
+    @Override
+    public InvoiceDto addInvoiceItems(InvoiceDto d) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'addInvoiceItems'");
+    }
+
+    @Override
+    public InvoiceDto deleteInvoiceItems(InvoiceDto d) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'deleteInvoiceItems'");
+    }
+
+    @Override
+    public InvoiceDto updateInvoiceItems(InvoiceDto d) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'updateInvoiceItems'");
+    }
+
+    @Override
+    public InvoiceDto getByName(String name) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getByName'");
+    }
+
+    @Override
+    public ResultSet getInvoiceItems(int invoice_id) throws SQLException {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getInvoiceItems'");
     }
 }

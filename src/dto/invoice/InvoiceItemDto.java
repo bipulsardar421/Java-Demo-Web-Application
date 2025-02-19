@@ -1,5 +1,7 @@
 package dto.invoice;
 
+import java.sql.ResultSet;
+
 public class InvoiceItemDto {
 
     private int id;
@@ -8,6 +10,12 @@ public class InvoiceItemDto {
     private int quantity;
     private double unitPrice;
     private double totalPrice;
+
+    private ResultSet rs;
+
+    public InvoiceItemDto(ResultSet rs) {
+        this.rs = rs;
+    }
 
     public InvoiceItemDto(int id, int invoiceId, int productId, int quantity, double unitPrice, double totalPrice) {
         this.id = id;
@@ -18,7 +26,6 @@ public class InvoiceItemDto {
         this.totalPrice = totalPrice;
     }
 
-    // Getters and setters
     public int getId() {
         return id;
     }
@@ -65,6 +72,14 @@ public class InvoiceItemDto {
 
     public void setTotalPrice(double totalPrice) {
         this.totalPrice = totalPrice;
+    }
+
+    public ResultSet getRs() {
+        return rs;
+    }
+
+    public void setRs(ResultSet rs) {
+        this.rs = rs;
     }
 
 }
