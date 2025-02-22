@@ -25,7 +25,7 @@ public class LoginDao implements LoginInterface {
         ps.setString(1, name);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
-            System.out.println("inside dao");
+
             int oid = rs.getInt("id");
             String uname = rs.getString("username");
             String pwd = rs.getString("password");
@@ -94,10 +94,54 @@ public class LoginDao implements LoginInterface {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String otp = rs.getString("otp");
-                    if (otp != null && LoginHelper.compareHash(otp, secret)) {
+                    if (otp != null && otp.equals(otp)) {
                         try (PreparedStatement updatePs = con.prepareStatement(updateQuery)) {
                             updatePs.setInt(1, rs.getInt("id"));
-                            System.out.println(rs.getInt("id"));
+
+                            updatePs.executeUpdate();
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public int signUpOtp(String uname, String otp) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        PreparedStatement ps = con.prepareStatement("insert into signupvalidation (email, otp) value (?,?)");
+        ps.setString(1, uname);
+        ps.setString(2, otp);
+        return ps.executeUpdate();
+    }
+
+    public boolean checkSignUpOtp(String uname, String otp) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        PreparedStatement ps = con.prepareStatement("select status from signupvalidation where email = ? and otp = ?");
+        ps.setString(1, uname);
+        ps.setString(2, otp);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next() && rs.getString("status").equals("active")) {
+            return true;
+        } else
+            return false;
+    }
+
+    public boolean deleteSignUpOtp(String uname, String otpSecret) throws SQLException {
+        String selectQuery = "SELECT id, otp FROM signupvalidation WHERE email = ? AND status = 'active'";
+        String updateQuery = "UPDATE signupvalidation SET status = 'inactive' WHERE id = ?";
+        try (Connection con = JdbcApp.getConnection();
+                PreparedStatement ps = con.prepareStatement(selectQuery)) {
+            ps.setString(1, uname);
+            try (ResultSet rs = ps.executeQuery()) {
+                System.out.println("coming");
+                if (rs.next()) {
+                    String otp = rs.getString("otp");
+                    if (otp != null && otp.equals(otpSecret)) {
+                        try (PreparedStatement updatePs = con.prepareStatement(updateQuery)) {
+                            System.out.println("delete");
+                            updatePs.setInt(1, rs.getInt("id"));
                             updatePs.executeUpdate();
                         }
                         return true;

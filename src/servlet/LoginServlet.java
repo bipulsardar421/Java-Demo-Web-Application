@@ -6,9 +6,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import javax.mail.MessagingException;
-import javax.mail.internet.AddressException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -34,32 +32,26 @@ public class LoginServlet extends HttpServlet {
     public void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/login");
         res.setContentType("application/json");
+
         try {
             switch (path) {
-
-                case "/login" ->
-                    LoginServlet.Login(req, res);
-                case "/gen-otp" ->
-                    LoginServlet.GenOtp(req, res);
-                case "/match-otp" ->
-                    LoginServlet.MatchOtp(req, res);
-                case "/change-pwd" ->
-                    LoginServlet.ChangePwd(req, res);
+                case "/login" -> LoginServlet.Login(req, res);
+                case "/gen-otp" -> LoginServlet.GenOtp(req, res);
+                case "/match-otp" -> LoginServlet.MatchOtp(req, res);
+                case "/change-pwd" -> LoginServlet.ChangePwd(req, res);
                 default -> {
                     res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    ResponseHandler.sendJsonResponse(res, "Error", "Invalid Request");
+                    ResponseHandler.sendJsonResponse(res, "error", "Invalid Request");
                 }
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error processing request", e);
-            ResponseHandler.sendJsonResponse(res, "Error", "Internal Server Error");
+            ResponseHandler.sendJsonResponse(res, "error", "Internal Server Error");
         }
-
     }
 
     private static void Login(HttpServletRequest req, HttpServletResponse res) throws IOException {
         HttpSession session = req.getSession();
-
         String uname = req.getParameter("username");
         String pwd = req.getParameter("password");
 
@@ -70,125 +62,124 @@ public class LoginServlet extends HttpServlet {
 
         try {
             LoginDto user = loginInterface.getByName(uname.trim());
-
             if (user != null && LoginHelper.compareHash(pwd.trim(), user.getPassword())) {
-                String role = user.getRole().equalsIgnoreCase("admin") ? "admin" : "vendor";
-                session.setAttribute("role", role);
-                ResponseHandler.sendJsonResponse(res, "success", "Login Successful as " + role);
+                session.setAttribute("username", uname);
+                session.setAttribute("userId", user.getId());
+
+                GenOtp(req, res);
             } else {
                 ResponseHandler.sendJsonResponse(res, "fail", "Invalid credentials");
             }
-
         } catch (SQLException e) {
-            e.printStackTrace();
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
         }
     }
 
     private static void GenOtp(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String uname = req.getParameter("username");
-        String sub = "Forgot Password OTP";
+        String operation = req.getParameter("operation");
 
-        if (uname == null || uname.trim().isEmpty()) {
-            ResponseHandler.sendJsonResponse(res, "error", "Missing username");
+        if (uname == null || operation == null || uname.trim().isEmpty()) {
+            ResponseHandler.sendJsonResponse(res, "error", "Missing username or operation type");
             return;
-
         }
 
         try {
-            LoginDto ld = loginInterface.getByName(uname.trim());
-            String storedUsername = Optional.ofNullable(ld).map(LoginDto::getUsername).orElse("");
-            if (uname.equalsIgnoreCase(storedUsername)) {
-                int user_id = ld.getId();
-                Random rc = new Random();
-                String otp = 100000 + rc.nextInt(900000) + "";
-
-                LoginDao dao = new LoginDao();
-                try {
-                    int p = dao.otp(user_id, otp);
-                    if (p > 0) {
-                        MailSenderHandler mail = new MailSenderHandler(uname, sub,
-                                "Hi, your OTP is ...\n" + otp.trim());
-                        mail.setupServerProperties();
-                        mail.draftEmail();
-                        mail.sendEmail();
-                        ResponseHandler.sendJsonResponse(res, "success", "mail_sent");
-                    }
-                } catch (SQLException e) {
-                    ResponseHandler.sendJsonResponse(res, "error", e.getMessage());
-                }
-            } else {
-                ResponseHandler.sendJsonResponse(res, "error", uname + " not found!");
+            LoginDto user = loginInterface.getByName(uname.trim());
+            if (user == null) {
+                ResponseHandler.sendJsonResponse(res, "error", "User not found");
+                return;
             }
-        } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error", e);
-            ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
-        } catch (AddressException e) {
-            LOGGER.log(Level.SEVERE, "Invalid email address", e);
-            ResponseHandler.sendJsonResponse(res, "error", "Invalid email address format");
-        } catch (MessagingException e) {
-            LOGGER.log(Level.SEVERE, "Email sending failed", e);
-            ResponseHandler.sendJsonResponse(res, "error", "Failed to send email. Please try again later.");
-        } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error", e);
-            ResponseHandler.sendJsonResponse(res, "error", "An unexpected error occurred");
+
+            int user_id = user.getId();
+            String otp = String.valueOf(100000 + new Random().nextInt(900000));
+
+            LoginDao dao = new LoginDao();
+            int otpSaved = dao.otp(user_id, otp);
+
+            if (otpSaved > 0) {
+                MailSenderHandler mail = new MailSenderHandler(uname, "OTP Verification",
+                        "Your OTP is: " + otp);
+                mail.setupServerProperties();
+                mail.draftEmail();
+                mail.sendEmail();
+
+                ResponseHandler.sendJsonResponse(res, "success", "OTP sent successfully");
+            } else {
+                ResponseHandler.sendJsonResponse(res, "error", "Failed to generate OTP");
+            }
+        } catch (SQLException | MessagingException e) {
+            ResponseHandler.sendJsonResponse(res, "error", "Error: " + e.getMessage());
         }
     }
 
     private static void MatchOtp(HttpServletRequest req, HttpServletResponse res) throws IOException {
         HttpSession session = req.getSession();
-        session.setMaxInactiveInterval(50 * 60);
-        int user_id = Integer.parseInt(req.getParameter("uid"));
+        String uname = req.getParameter("username");
         String otp = req.getParameter("otp");
-        LoginDao ldao = new LoginDao();
-        try {
-            if (ldao.checkOtp(user_id, otp)) {
-                session.setAttribute("secret", otp);
-                session.setAttribute("id", user_id);
-                ResponseHandler.sendJsonResponse(res, "Success", "ok");
+        String operation = req.getParameter("operation");
 
-            } else {
-                ResponseHandler.sendJsonResponse(res, "error", "Invalid 'OTP' entered");
-            }
-        } catch (SQLException e) {
-            ResponseHandler.sendJsonResponse(res, "error", "err: " + e.getMessage());
-        }
-    }
-
-    private static void ChangePwd(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        HttpSession session = req.getSession();
-        LoginDao dao = new LoginDao();
-        String secret = (String) session.getAttribute("secret");
-        int userId = (int) session.getAttribute("id");
-        if (secret == null || userId == 0) {
-            ResponseHandler.sendJsonResponse(res, "error", "Session data not found");
+        if (uname == null || otp == null || operation == null) {
+            ResponseHandler.sendJsonResponse(res, "error", "Missing required parameters");
             return;
         }
-        System.out.println(secret);
-        System.out.println(userId);
+
         try {
-            System.out.println(dao.getOtp(userId, secret));
-            if (dao.getOtp(userId, secret)) {
-                ResponseHandler.sendJsonResponse(res, "error", "Session data modified, try again!");
+            LoginDto user = loginInterface.getByName(uname.trim());
+            if (user == null) {
+                ResponseHandler.sendJsonResponse(res, "error", "User not found");
                 return;
             }
-            String newPwd = req.getParameter("new_pwd");
-            if (newPwd == null) {
-                ResponseHandler.sendJsonResponse(res, "error", "Passwords do not match!");
-                return;
-            }
-            LoginDto ldto = new LoginDto(userId, "", LoginHelper.hashString(newPwd), "");
-            int result = dao.update(ldto);
 
-            if (result > 0) {
-                ResponseHandler.sendJsonResponse(res, "Success", "Password updated successfully!");
+            LoginDao dao = new LoginDao();
+            boolean isOtpValid = dao.checkOtp(user.getId(), otp);
+
+            if (isOtpValid) {
+                session.setAttribute("authenticated", true);
+                session.setAttribute("userId", user.getId());
+                
+                dao.getOtp(user.getId(), otp);
+                if ("login".equalsIgnoreCase(operation)) {
+                    ResponseHandler.sendJsonResponse(res, "success", "Login successful!");
+                } else if ("forgot-password".equalsIgnoreCase(operation)) {
+                    ResponseHandler.sendJsonResponse(res, "success", "OTP verified! Proceed with password reset.");
+                }
             } else {
-                ResponseHandler.sendJsonResponse(res, "error", "Failed to update password.");
+                ResponseHandler.sendJsonResponse(res, "error", "Invalid OTP");
             }
-
         } catch (SQLException e) {
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
         }
     }
 
+    private static void ChangePwd(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        HttpSession session = req.getSession();
+        Integer userId = (Integer) session.getAttribute("userId");
+        boolean isAuthenticated = Boolean.TRUE.equals(session.getAttribute("authenticated"));
+
+        if (userId == null || !isAuthenticated) {
+            ResponseHandler.sendJsonResponse(res, "error", "Session expired or unauthorized");
+            return;
+        }
+
+        String newPwd = req.getParameter("new_pwd");
+        if (newPwd == null || newPwd.trim().isEmpty()) {
+            ResponseHandler.sendJsonResponse(res, "error", "New password is required");
+            return;
+        }
+
+        try {
+            LoginDao dao = new LoginDao();
+            LoginDto user = new LoginDto(userId, "", LoginHelper.hashString(newPwd), "");
+
+            int result = dao.update(user);
+            if (result > 0) {
+                ResponseHandler.sendJsonResponse(res, "success", "Password updated successfully");
+            } else {
+                ResponseHandler.sendJsonResponse(res, "error", "Failed to update password");
+            }
+        } catch (SQLException e) {
+            ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
+        }
+    }
 }

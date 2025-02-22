@@ -26,7 +26,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
                     JSONArray items = invoiceRecord(invoiceId);
                     invoiceObject.put("items", items);
                 }
-                System.out.println(invoiceJsonArray);
+                
                 return invoiceJsonArray;
             }
         }

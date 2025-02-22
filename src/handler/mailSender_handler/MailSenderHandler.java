@@ -35,7 +35,7 @@ public class MailSenderHandler {
         transport.connect(emailHost, fromUser, fromUserPassword);
         transport.sendMessage(mimeMessage, mimeMessage.getAllRecipients());
         transport.close();
-        System.out.println("Email successfully sent!!!");
+        
     }
 
     public MimeMessage draftEmail() throws AddressException, MessagingException, IOException {
@@ -56,6 +56,14 @@ public class MailSenderHandler {
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.starttls.enable", "true");
         newSession = Session.getDefaultInstance(properties, null);
+    }
+
+    public static void main(String[] args) throws AddressException, MessagingException, IOException {
+        MailSenderHandler mail = new MailSenderHandler("bipulsardar091@gmail.com", "OTP Verification",
+                "Your OTP is: " + "otp");
+        mail.setupServerProperties();
+        mail.draftEmail();
+        mail.sendEmail();
     }
 
 }

@@ -9,3 +9,6 @@ cd src\servlet
 javac -d "../../WEB-INF/classes" -cp "../../lib/*;../../src" *.java
 
 cd ..\..\..\
+
+
+python -u "c:\Users\Albatross\Desktop\index.py"

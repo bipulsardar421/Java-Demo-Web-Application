@@ -47,11 +47,11 @@ public class UploadHandler {
         try {
             URI uri = new URI(url);
             String filePath = uri.getPath();
-            System.out.println("Extracted file path: " + filePath);
+            
             String relativePath = filePath.substring(filePath.indexOf("/images/"));
-            System.out.println("Relative path: " + relativePath);
+            
             String uploadPath = servletContext.getRealPath("/") + relativePath;
-            System.out.println("Full file path to delete: " + uploadPath);
+            
             File file = new File(uploadPath);
             if (file.exists()) {
                 if (file.delete()) {
