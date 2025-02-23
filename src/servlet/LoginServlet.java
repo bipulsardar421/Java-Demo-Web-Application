@@ -65,7 +65,6 @@ public class LoginServlet extends HttpServlet {
             if (user != null && LoginHelper.compareHash(pwd.trim(), user.getPassword())) {
                 session.setAttribute("username", uname);
                 session.setAttribute("userId", user.getId());
-
                 GenOtp(req, res);
             } else {
                 ResponseHandler.sendJsonResponse(res, "fail", "Invalid credentials");
@@ -78,7 +77,7 @@ public class LoginServlet extends HttpServlet {
     private static void GenOtp(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String uname = req.getParameter("username");
         String operation = req.getParameter("operation");
-
+        LoginDao dao = new LoginDao();
         if (uname == null || operation == null || uname.trim().isEmpty()) {
             ResponseHandler.sendJsonResponse(res, "error", "Missing username or operation type");
             return;
@@ -92,9 +91,8 @@ public class LoginServlet extends HttpServlet {
             }
 
             int user_id = user.getId();
+            dao.deleteLoginOtp(user_id);
             String otp = String.valueOf(100000 + new Random().nextInt(900000));
-
-            LoginDao dao = new LoginDao();
             int otpSaved = dao.otp(user_id, otp);
 
             if (otpSaved > 0) {
@@ -136,11 +134,12 @@ public class LoginServlet extends HttpServlet {
 
             if (isOtpValid) {
                 session.setAttribute("authenticated", true);
-                session.setAttribute("userId", user.getId());
-                
-                dao.getOtp(user.getId(), otp);
+                session.setAttribute("user", user.getUsername());
+                session.setAttribute("role", user.getRole());
+
+                dao.deleteLoginOtp(user.getId());
                 if ("login".equalsIgnoreCase(operation)) {
-                    ResponseHandler.sendJsonResponse(res, "success", "Login successful!");
+                    ResponseHandler.sendJsonResponse(res, "success", "Login successful!", "role", user.getRole());
                 } else if ("forgot-password".equalsIgnoreCase(operation)) {
                     ResponseHandler.sendJsonResponse(res, "success", "OTP verified! Proceed with password reset.");
                 }

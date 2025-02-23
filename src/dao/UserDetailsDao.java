@@ -37,7 +37,7 @@ public class UserDetailsDao implements UserDetailsInterface {
     @Override
     public JSONArray getAll() throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String qry = "SELECT * FROM user_details WHERE status = 'active'";
+        String qry = "SELECT * FROM user_details WHERE status = 'active' and user_id in (select id from login where role = 'vendor' and status ='active')";
         PreparedStatement ps = con.prepareStatement(qry);
         ResultSet rs = ps.executeQuery();
         return JsonResultset.convertToJson(rs);

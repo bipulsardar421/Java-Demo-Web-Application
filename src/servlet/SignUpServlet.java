@@ -7,6 +7,7 @@ import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.mail.MessagingException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -17,6 +18,8 @@ import dao.interfaces.LoginInterface;
 import dto.login.LoginDto;
 import handler.mailSender_handler.MailSenderHandler;
 import handler.response_handler.ResponseHandler;
+
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, maxFileSize = 1024 * 1024 * 10, maxRequestSize = 1024 * 1024 * 50)
 
 @WebServlet("/signup/*")
 public class SignUpServlet extends HttpServlet {
@@ -73,14 +76,15 @@ public class SignUpServlet extends HttpServlet {
     private boolean GenOtp(HttpServletRequest req, HttpServletResponse res) throws IOException, SQLException {
         String email = req.getParameter("email");
         LoginDao dao = new LoginDao();
-
+        String otp="";
         if (email == null || email.trim().isEmpty()) {
             ResponseHandler.sendJsonResponse(res, "error", "Email is required");
             return false;
         }
 
         try {
-            String otp = String.valueOf(100000 + new Random().nextInt(900000));
+            dao.deleteSignUpOtp(email, "");
+             otp = String.valueOf(100000 + new Random().nextInt(900000));
             int otpSaved = dao.signUpOtp(email, otp);
 
             if (otpSaved > 0) {
@@ -95,7 +99,7 @@ public class SignUpServlet extends HttpServlet {
                 return false;
             }
         } catch (SQLException | MessagingException e) {
-            dao.deleteSignUpOtp(email, "");
+            dao.deleteSignUpOtp(email, otp);
             ResponseHandler.sendJsonResponse(res, "error", "Error: " + e.getMessage());
             return false;
         }

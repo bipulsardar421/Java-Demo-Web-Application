@@ -11,6 +11,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
 import dao.UserDetailsDao;
@@ -23,11 +24,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@MultipartConfig(
-        fileSizeThreshold = 1024 * 1024 * 2,
-        maxFileSize = 1024 * 1024 * 10,
-        maxRequestSize = 1024 * 1024 * 50
-)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, maxFileSize = 1024 * 1024 * 10, maxRequestSize = 1024 * 1024 * 50)
 @WebServlet("/userdetails/*")
 public class UserDetailsServlet extends HttpServlet {
 
@@ -37,7 +34,14 @@ public class UserDetailsServlet extends HttpServlet {
     private final UserDetailsInterface userDao = new UserDetailsDao();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(false);
+       
+            if (session.getAttribute("user") == null) {
+                return;
+            }
+        
         String path = Optional.ofNullable(request.getPathInfo()).orElse("/view");
         response.setContentType("application/json");
 
@@ -80,11 +84,13 @@ public class UserDetailsServlet extends HttpServlet {
         }
     }
 
-    private void handleAddOrUpdateUser(HttpServletRequest request, HttpServletResponse response, boolean isUpdate) throws IOException, ServletException {
+    private void handleAddOrUpdateUser(HttpServletRequest request, HttpServletResponse response, boolean isUpdate)
+            throws IOException, ServletException {
         try {
             int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
             int userId = Integer.parseInt(request.getParameter("user_id"));
-            String username = Optional.ofNullable(request.getParameter("user_name")).orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
+            String username = Optional.ofNullable(request.getParameter("user_name"))
+                    .orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
             int phone = Integer.parseInt(request.getParameter("phone"));
             String address = Optional.ofNullable(request.getParameter("address")).orElse("");
             String image = null;
@@ -109,11 +115,13 @@ public class UserDetailsServlet extends HttpServlet {
             }
             String status = Optional.ofNullable(request.getParameter("status")).orElse("active");
 
-            UserDetailsDto user = new UserDetailsDto(id, userId, username, phone, address, image, status, Timestamp.valueOf(LocalDateTime.now()));
+            UserDetailsDto user = new UserDetailsDto(id, userId, username, phone, address, image, status,
+                    Timestamp.valueOf(LocalDateTime.now()));
             int result = isUpdate ? userDao.update(user) : userDao.insert(user);
 
             if (result > 0) {
-                ResponseHandler.sendJsonResponse(response, "Success", isUpdate ? "Updated Successfully" : "Added Successfully");
+                ResponseHandler.sendJsonResponse(response, "Success",
+                        isUpdate ? "Updated Successfully" : "Added Successfully");
             } else {
                 ResponseHandler.sendJsonResponse(response, "Error", "Operation Failed");
             }
@@ -133,7 +141,8 @@ public class UserDetailsServlet extends HttpServlet {
 
         try {
             int id = Integer.parseInt(idParam);
-            UserDetailsDto user = new UserDetailsDto(id, 0, "", 0, "", "", "inactive", Timestamp.valueOf(LocalDateTime.now()));
+            UserDetailsDto user = new UserDetailsDto(id, 0, "", 0, "", "", "inactive",
+                    Timestamp.valueOf(LocalDateTime.now()));
             int result = userDao.delete(user);
 
             if (result > 0) {

@@ -85,7 +85,7 @@ public class LoginDao implements LoginInterface {
             return false;
     }
 
-    public boolean getOtp(int user_id, String secret) throws SQLException {
+    public boolean deleteLoginOtp(int user_id) throws SQLException {
         String selectQuery = "SELECT id, otp FROM otpvalidation WHERE user_id = ? AND status = 'active'";
         String updateQuery = "UPDATE otpvalidation SET status = 'inactive' WHERE id = ?";
         try (Connection con = JdbcApp.getConnection();
@@ -94,7 +94,7 @@ public class LoginDao implements LoginInterface {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     String otp = rs.getString("otp");
-                    if (otp != null && otp.equals(otp)) {
+                    if (otp != null) {
                         try (PreparedStatement updatePs = con.prepareStatement(updateQuery)) {
                             updatePs.setInt(1, rs.getInt("id"));
 
@@ -138,7 +138,7 @@ public class LoginDao implements LoginInterface {
                 System.out.println("coming");
                 if (rs.next()) {
                     String otp = rs.getString("otp");
-                    if (otp != null && otp.equals(otpSecret)) {
+                    if (otp != null) {
                         try (PreparedStatement updatePs = con.prepareStatement(updateQuery)) {
                             System.out.println("delete");
                             updatePs.setInt(1, rs.getInt("id"));
