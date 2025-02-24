@@ -5,8 +5,6 @@ import java.io.PrintWriter;
 import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 
-
-
 public class ResponseHandler {
 
     public static void sendTextResponse(HttpServletResponse response, String message) throws IOException {
@@ -28,6 +26,18 @@ public class ResponseHandler {
         response.setCharacterEncoding("UTF-8");
         JSONObject jsonResponse = new JSONObject();
         jsonResponse.put("status", status);
+        jsonResponse.put("message", message);
+        try (PrintWriter out = response.getWriter()) {
+            out.println(jsonResponse.toString());
+        }
+    }
+
+    public static void sendJsonResponse(HttpServletResponse response, String status, String message, String extraKey, String extraValue) throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        JSONObject jsonResponse = new JSONObject();
+        jsonResponse.put("status", status);
+        jsonResponse.put(extraKey, extraValue);
         jsonResponse.put("message", message);
         try (PrintWriter out = response.getWriter()) {
             out.println(jsonResponse.toString());

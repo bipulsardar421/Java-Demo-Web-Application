@@ -1,5 +1,6 @@
 package dto.stock;
 
+import java.sql.Date;
 import java.sql.ResultSet;
 
 public class stockDto {
@@ -8,7 +9,7 @@ public class stockDto {
     String pname;
     int qty;
     int rate;
-    String r_date;
+    Date r_date;
     String img;
     String status;
     ResultSet data;
@@ -45,11 +46,11 @@ public class stockDto {
         this.rate = rate;
     }
 
-    public String getR_date() {
+    public Date getR_date() {
         return r_date;
     }
 
-    public void setR_date(String r_date) {
+    public void setR_date(Date r_date) {
         this.r_date = r_date;
     }
 
@@ -69,7 +70,7 @@ public class stockDto {
         this.status = status;
     }
 
-    public stockDto(int pid, String pname, int qty, int rate, String r_date, String img, String status) {
+    public stockDto(int pid, String pname, int qty, int rate, Date r_date, String img, String status) {
         this.pid = pid;
         this.pname = pname;
         this.qty = qty;

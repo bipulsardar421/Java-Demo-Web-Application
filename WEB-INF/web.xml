@@ -5,7 +5,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>indexServlet</servlet-name>
-        <url-pattern>/index</url-pattern>
+        <url-pattern>/</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>
@@ -16,5 +16,8 @@
         <servlet-name>default</servlet-name>
         <url-pattern>/images/users/*</url-pattern>
     </servlet-mapping>
-    
+    <servlet-mapping>
+        <servlet-name>default</servlet-name>
+        <url-pattern>/uploads/*</url-pattern>
+    </servlet-mapping>
 </web-app>

@@ -27,6 +27,6 @@ public class LoginHelper {
         return generatedHash.equalsIgnoreCase(hashedText);
     }
     public static void main(String[] args) {
-        System.out.println(LoginHelper.compareHash("sardar","fd5a7510428eb97f8d02a1f7875e21d79367e94809cf76e58eeb3366a478b6f4"));
+        
     }
 }

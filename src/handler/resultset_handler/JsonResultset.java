@@ -3,7 +3,6 @@ package handler.resultset_handler;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -24,4 +23,5 @@ public class JsonResultset {
         }
         return jsonArray;
     }
+
 }
