@@ -11,4 +11,4 @@ javac -d "../../WEB-INF/classes" -cp "../../lib/*;../../src" *.java
 cd ..\..\..\
 
 
-python -u "c:\Users\Albatross\Desktop\index.py"
+python -u "C:\xampp\tomcat\webapps\Java-Demo-Web-Application\server.py"

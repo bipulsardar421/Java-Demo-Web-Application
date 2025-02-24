@@ -13,11 +13,11 @@ import controller.JdbcApp;
 
 public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<InvoiceDto> {
 
-    public JSONArray search(int searchInvoice) throws SQLException {
+    public JSONArray getWithUserId(int userId) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "SELECT * FROM invoice WHERE invoice_id = ?";
+        String query = "SELECT * FROM invoice WHERE user_id = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setInt(1,  searchInvoice );
+            stmt.setInt(1,  userId );
             try (ResultSet rs = stmt.executeQuery()) {
                 JSONArray invoiceJsonArray = JsonResultset.convertToJson(rs);
                 for (int i = 0; i < invoiceJsonArray.length(); i++) {

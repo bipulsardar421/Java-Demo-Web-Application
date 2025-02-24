@@ -51,10 +51,10 @@ public class InvoiceServlet extends HttpServlet {
     }
 
     private static void getInvoice(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        int searchInvoice = Integer.parseInt(req.getParameter("search"));
+        int uid = Integer.parseInt(req.getParameter("uid"));
         try {
             InvoiceDao invoiceDao = new InvoiceDao();
-             res.getWriter().println(invoiceDao.search(searchInvoice));
+             res.getWriter().println(invoiceDao.getWithUserId(uid));
         } catch (SQLException e) {
             e.printStackTrace(); 
         }

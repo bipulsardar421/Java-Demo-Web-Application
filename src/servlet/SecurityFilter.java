@@ -28,23 +28,19 @@ public class SecurityFilter implements Filter {
         HttpSession session = req.getSession(false);
         String path = req.getServletPath();
 
-        // Set Security Headers
         setSecurityHeaders(res);
         setCORSHeaders(req, res);
 
-        // Handle CORS preflight requests
         if ("OPTIONS".equalsIgnoreCase(req.getMethod())) {
             res.setStatus(HttpServletResponse.SC_OK);
             return;
         }
 
-        // Allow specific unauthenticated paths
         if (ALLOWED_PATHS.contains(path)) {
             chain.doFilter(request, response);
             return;
         }
 
-        // Authentication Check
         if (session == null) {
             res.setContentType("application/json");
             res.setCharacterEncoding("UTF-8");

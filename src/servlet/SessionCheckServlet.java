@@ -26,6 +26,7 @@ public class SessionCheckServlet extends HttpServlet {
         try {
             switch (path) {
                 case "/check" -> checkSession(req, res);
+                case "/getId" -> getUserId(req, res);
                 case "/logout" -> logoutSession(req, res);
                 default -> {
                     res.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -43,6 +44,16 @@ public class SessionCheckServlet extends HttpServlet {
         if (session != null && session.getAttribute("user") != null) {
             String role = (String) session.getAttribute("role");
             ResponseHandler.sendJsonResponse(res, "true", "authenticated", "role", role);
+        } else {
+            ResponseHandler.sendJsonResponse(res, "false", "not_authenticated");
+        }
+    }
+
+    private static void getUserId(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        HttpSession session = req.getSession(false);
+        if (session != null && session.getAttribute("userId") != null) {
+            int user_id = (int) session.getAttribute("userId");
+            ResponseHandler.sendJsonResponse(res, "true", "authenticated", "user_id", user_id + "");
         } else {
             ResponseHandler.sendJsonResponse(res, "false", "not_authenticated");
         }

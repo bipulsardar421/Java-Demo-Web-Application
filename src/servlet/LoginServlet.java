@@ -67,7 +67,7 @@ public class LoginServlet extends HttpServlet {
                 session.setAttribute("userId", user.getId());
                 GenOtp(req, res);
             } else {
-                ResponseHandler.sendJsonResponse(res, "fail", "Invalid credentials");
+                ResponseHandler.sendJsonResponse(res, "error", "Invalid credentials");
             }
         } catch (SQLException e) {
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
