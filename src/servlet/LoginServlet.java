@@ -134,6 +134,7 @@ public class LoginServlet extends HttpServlet {
 
             if (isOtpValid) {
                 session.setAttribute("authenticated", true);
+                session.setAttribute("userId", user.getId());
                 session.setAttribute("user", user.getUsername());
                 session.setAttribute("role", user.getRole());
 
