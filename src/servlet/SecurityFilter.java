@@ -8,7 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-@WebFilter("/bipul/*")
+@WebFilter("/*")
 public class SecurityFilter implements Filter {
     private static final Set<String> ALLOWED_PATHS = Set.of("/login", "/signup", "/gen-otp", "/match-otp");
 

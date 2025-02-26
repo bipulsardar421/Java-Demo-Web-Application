@@ -8,7 +8,7 @@ cd src\servlet
 
 javac -d "../../WEB-INF/classes" -cp "../../lib/*;../../src" *.java
 
-cd ..\..\..\
+cd ..\..\
 
 
-python -u "C:\xampp\tomcat\webapps\Java-Demo-Web-Application\server.py"
+python -u ".\server.py"

@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 
+import org.json.JSONArray;
+
 import dao.UserDetailsDao;
 import dao.interfaces.UserDetailsInterface;
 import dto.user_details.UserDetailsDto;
@@ -37,11 +39,11 @@ public class UserDetailsServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-       
-            if (session.getAttribute("user") == null) {
-                return;
-            }
-        
+
+        if (session.getAttribute("user") == null) {
+            return;
+        }
+
         String path = Optional.ofNullable(request.getPathInfo()).orElse("/view");
         response.setContentType("application/json");
 
@@ -76,7 +78,13 @@ public class UserDetailsServlet extends HttpServlet {
         try {
             int id = Integer.parseInt(idParam);
             UserDetailsDto user = userDao.get(id);
-            response.getWriter().println(JsonResultset.convertToJson(user.getRs()));
+            if (user.getRs() != null && user.getRs().isBeforeFirst()) {
+                JSONArray jsonResult = JsonResultset.convertToJson(user.getRs());
+                System.out.println(jsonResult);
+                response.getWriter().println(jsonResult);
+            } else {
+                ResponseHandler.sendJsonResponse(response, "empty", "New User", "code", "xvg1890");
+            }
         } catch (NumberFormatException e) {
             ResponseHandler.sendJsonResponse(response, "Error", "Invalid 'id' format");
         } catch (SQLException e) {

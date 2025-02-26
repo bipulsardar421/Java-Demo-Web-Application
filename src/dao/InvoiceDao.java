@@ -133,7 +133,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
     }
 
     @Override
-    public InvoiceDto addInvoiceItems(InvoiceDto d) {
+    public InvoiceDto addInvoiceItems(JSONArray d, int invoice_id) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'addInvoiceItems'");
     }

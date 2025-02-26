@@ -27,7 +27,7 @@ public class UserDetailsDao implements UserDetailsInterface {
     @Override
     public UserDetailsDto get(int id) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String qry = "SELECT * FROM user_details WHERE user_id = ?";
+        String qry = "SELECT  u.user_id, r.role, u.user_name, u.phone, u.address, u.image FROM user_details u JOIN login r ON u.user_id = r.id WHERE u.user_id = ?";
         PreparedStatement ps = con.prepareStatement(qry);
         ps.setInt(1, id);
         ResultSet rs = ps.executeQuery();
