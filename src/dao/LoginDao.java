@@ -183,4 +183,48 @@ public class LoginDao implements LoginInterface {
         throw new UnsupportedOperationException("Unimplemented method 'get'");
     }
 
+    @Override
+    public ResultSet getUsersData(int id) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String query = "select l.id as uid, u.user_name as name, l.username as email,  l.role as role from user_details u join login l on u.user_id = l.id where l.id not in (?)";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setInt(1, id);
+        ResultSet rs = pst.executeQuery();
+        return rs;
+    }
+
+    @Override
+    public int[] editUserRole(JSONArray jdata) throws SQLException {
+        String query = "UPDATE login SET role=? WHERE id=?";
+        Connection con = null;
+        try {
+            con = JdbcApp.getConnection(); 
+            con.setAutoCommit(false);
+            try (PreparedStatement pstmt = con.prepareStatement(query)) {
+                for (int i = 0; i < jdata.length(); i++) {
+                    pstmt.setString(1, jdata.getJSONObject(i).getString("role"));
+                    pstmt.setInt(2, jdata.getJSONObject(i).getInt("id"));
+                    pstmt.addBatch();
+                }
+                int[] updateCounts = pstmt.executeBatch();
+                con.commit();
+                return updateCounts;
+            }
+        } catch (SQLException e) {
+            if (con != null) {
+                con.rollback();
+            }
+            throw e;
+        } finally {
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+    
+
 }

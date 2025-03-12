@@ -22,11 +22,7 @@ import java.util.logging.Logger;
 
 import javax.servlet.http.Part;
 
-@MultipartConfig(
-        fileSizeThreshold = 1024 * 1024 * 2,
-        maxFileSize = 1024 * 1024 * 10,
-        maxRequestSize = 1024 * 1024 * 50
-)
+@MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, maxFileSize = 1024 * 1024 * 10, maxRequestSize = 1024 * 1024 * 50)
 @WebServlet("/stock/*")
 public class StockServlet extends HttpServlet {
 
@@ -35,7 +31,8 @@ public class StockServlet extends HttpServlet {
     private final StockInterface stInt = new StockDao();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
         String path = Optional.ofNullable(request.getPathInfo()).orElse("/view");
         response.setContentType("application/json");
 
@@ -78,13 +75,16 @@ public class StockServlet extends HttpServlet {
         }
     }
 
-    private void handleAddOrUpdateStock(HttpServletRequest request, HttpServletResponse response, boolean isUpdate) throws IOException, ServletException {
+    private void handleAddOrUpdateStock(HttpServletRequest request, HttpServletResponse response, boolean isUpdate)
+            throws IOException, ServletException {
         try {
 
             int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
-            String pname = Optional.ofNullable(request.getParameter("product_name")).orElseThrow(() -> new IllegalArgumentException("Missing 'product_name'"));
+            int vendor_id = Integer.parseInt(request.getParameter("vendors"));
+            String pname = Optional.ofNullable(request.getParameter("product_name"))
+                    .orElseThrow(() -> new IllegalArgumentException("Missing 'product_name'"));
             int qty = Integer.parseInt(request.getParameter("quantity"));
-            int rate = Integer.parseInt(request.getParameter("rate"));
+            double rate = Double.parseDouble(request.getParameter("rate"));
             Date recievedDate = Date.valueOf(request.getParameter("recieved_date"));
             String image = null;
             if (RequestHandler.isMultipart(request)) {
@@ -106,10 +106,11 @@ public class StockServlet extends HttpServlet {
             } else {
                 image = request.getParameter("image");
             }
-            stockDto stock = new stockDto(id, pname, qty, rate, recievedDate, image, "active");
+            stockDto stock = new stockDto(id, vendor_id, pname, qty, rate, recievedDate, image, "active");
             int result = isUpdate ? stInt.update(stock) : stInt.insert(stock);
             if (result > 0) {
-                ResponseHandler.sendJsonResponse(response, "Success", isUpdate ? "Updated Successfully" : "Added Successfully");
+                ResponseHandler.sendJsonResponse(response, "Success",
+                        isUpdate ? "Updated Successfully" : "Added Successfully");
             } else {
                 ResponseHandler.sendJsonResponse(response, "Error", "Operation Failed");
             }

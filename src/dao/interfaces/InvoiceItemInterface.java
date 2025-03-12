@@ -9,7 +9,7 @@ public interface InvoiceItemInterface<InvoiceDto> {
 
     public ResultSet getInvoiceItems(int invoice_id) throws SQLException;
 
-    public InvoiceDto addInvoiceItems(JSONArray d, int invoice_id) throws SQLException;
+    public int[] addInvoiceItems(JSONArray d, int invoice_id) throws SQLException;
 
     public InvoiceDto deleteInvoiceItems(InvoiceDto d) throws SQLException;
 

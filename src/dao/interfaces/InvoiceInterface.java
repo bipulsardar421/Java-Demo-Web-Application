@@ -8,5 +8,7 @@ import dao.GenericDao.GenericDao;
 import dto.invoice.InvoiceDto;
 
 public interface InvoiceInterface extends GenericDao<InvoiceDto> {
-    public JSONArray getWithUserId(int userId) throws SQLException;
+    public JSONArray getWithUserId(long phone) throws SQLException;
+
+    JSONArray search(long phone, long searchParam) throws SQLException;
 }

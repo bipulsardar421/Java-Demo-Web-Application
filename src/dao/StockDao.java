@@ -44,13 +44,14 @@ public class StockDao implements StockInterface {
     @Override
     public int insert(stockDto t) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String qry = "insert into stock (product_name, quantity, rate, recieved_date, image) value (?,?,?,?,?)";
+        String qry = "insert into stock (vendor_id, product_name, quantity, rate, recieved_date, image) value (?,?,?,?,?,?)";
         PreparedStatement ps = con.prepareStatement(qry);
-        ps.setString(1, t.getPname());
-        ps.setInt(2, t.getQty());
-        ps.setInt(3, t.getRate());
-        ps.setDate(4, t.getR_date());
-        ps.setString(5, t.getImg());
+        ps.setInt(1, t.getVendor_id());
+        ps.setString(2, t.getPname());
+        ps.setInt(3, t.getQty());
+        ps.setDouble(4, t.getRate());
+        ps.setDate(5, t.getR_date());
+        ps.setString(6, t.getImg());
         int result = ps.executeUpdate();
         return result;
     }
@@ -63,7 +64,7 @@ public class StockDao implements StockInterface {
         ps = con.prepareStatement(updateQry);
         ps.setString(1, t.getPname());
         ps.setInt(2, t.getQty());
-        ps.setInt(3, t.getRate());
+        ps.setDouble(3, t.getRate());
         ps.setDate(4, t.getR_date());
         ps.setString(5, t.getImg());
         ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now()));

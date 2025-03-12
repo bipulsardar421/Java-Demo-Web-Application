@@ -1,6 +1,7 @@
 package servlet;
 
 import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.Random;
@@ -13,12 +14,16 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
+import org.json.JSONArray;
+
 import dao.LoginDao;
 import dao.interfaces.LoginInterface;
 import dto.login.LoginDto;
 import helper.LoginHelper;
 import handler.mailSender_handler.MailSenderHandler;
 import handler.response_handler.ResponseHandler;
+import handler.resultset_handler.JsonResultset;
 
 @MultipartConfig(fileSizeThreshold = 1024 * 1024 * 2, maxFileSize = 1024 * 1024 * 10, maxRequestSize = 1024 * 1024 * 50)
 
@@ -39,6 +44,8 @@ public class LoginServlet extends HttpServlet {
                 case "/gen-otp" -> LoginServlet.GenOtp(req, res);
                 case "/match-otp" -> LoginServlet.MatchOtp(req, res);
                 case "/change-pwd" -> LoginServlet.ChangePwd(req, res);
+                case "/get-users" -> LoginServlet.getUsers(req, res);
+                case "/edit-role" -> LoginServlet.editUserRole(req, res);
                 default -> {
                     res.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     ResponseHandler.sendJsonResponse(res, "error", "Invalid Request");
@@ -180,6 +187,57 @@ public class LoginServlet extends HttpServlet {
             }
         } catch (SQLException e) {
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
+        }
+    }
+
+    private static void getUsers(HttpServletRequest req, HttpServletResponse res) throws SQLException, IOException {
+        int id = Integer.parseInt(req.getParameter("id"));
+        HttpSession session = req.getSession();
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null || userId != id) {
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            res.getWriter().write("{\"error\": \"Unauthorized access\"}");
+            return;
+        }
+        try {
+            ResultSet rs = loginInterface.getUsersData(id);
+            if (!rs.isBeforeFirst()) {
+                ResponseHandler.sendJsonResponse(res, "error", "No users found.");
+                return;
+            }
+            res.getWriter().println(JsonResultset.convertToJson(rs));
+        } catch (SQLException e) {
+            e.printStackTrace();
+            ResponseHandler.sendJsonResponse(res, "error", "An error occurred while fetching user data.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            ResponseHandler.sendJsonResponse(res, "error", "Unexpected error occurred.");
+        }
+    }
+
+    private static void editUserRole(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        String jsonData = req.getParameter("data");
+        HttpSession session = req.getSession();
+        Integer userId = (Integer) session.getAttribute("userId");
+        if (userId == null) {
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            res.getWriter().write("{\"error\": \"Unauthorized access\"}");
+            return;
+        }
+        try {
+            JSONArray ja = new JSONArray(jsonData);
+            int result[] = loginInterface.editUserRole(ja);
+            if (result.length > 0) {
+                ResponseHandler.sendJsonResponse(res, "success", "User role updated successfully.");
+                return;
+            }
+            ResponseHandler.sendJsonResponse(res, "error", "No users found.");
+        } catch (SQLException e) {
+            e.printStackTrace();
+            ResponseHandler.sendJsonResponse(res, "error", "An error occurred while fetching user data.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            ResponseHandler.sendJsonResponse(res, "error", "Unexpected error occurred.");
         }
     }
 }

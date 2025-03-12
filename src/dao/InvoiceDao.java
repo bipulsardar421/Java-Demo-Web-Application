@@ -7,17 +7,18 @@ import handler.resultset_handler.JsonResultset;
 
 import java.sql.*;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import controller.JdbcApp;
 
 public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<InvoiceDto> {
 
-    public JSONArray getWithUserId(int userId) throws SQLException {
+    public JSONArray getWithUserId(long phone) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "SELECT * FROM invoice WHERE user_id = ?";
+        String query = "SELECT * FROM invoice WHERE customer_contact = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setInt(1,  userId );
+            stmt.setLong(1, phone);
             try (ResultSet rs = stmt.executeQuery()) {
                 JSONArray invoiceJsonArray = JsonResultset.convertToJson(rs);
                 for (int i = 0; i < invoiceJsonArray.length(); i++) {
@@ -26,7 +27,26 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
                     JSONArray items = invoiceRecord(invoiceId);
                     invoiceObject.put("items", items);
                 }
-                
+
+                return invoiceJsonArray;
+            }
+        }
+    }
+
+    public JSONArray search(long phone, long searchParam) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String query = "SELECT * FROM invoice WHERE customer_contact = ? AND invoice_id = ?";
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setLong(1, phone);
+            stmt.setLong(2, searchParam);
+            try (ResultSet rs = stmt.executeQuery()) {
+                JSONArray invoiceJsonArray = JsonResultset.convertToJson(rs);
+                for (int i = 0; i < invoiceJsonArray.length(); i++) {
+                    JSONObject invoiceObject = invoiceJsonArray.getJSONObject(i);
+                    int invoiceId = invoiceObject.getInt("invoice_id");
+                    JSONArray items = invoiceRecord(invoiceId);
+                    invoiceObject.put("items", items);
+                }
                 return invoiceJsonArray;
             }
         }
@@ -34,7 +54,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
 
     public JSONArray invoiceRecord(int invoiceId) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "SELECT * FROM invoice_item WHERE invoice_id = ?";
+        String query = "SELECT i.item_id, i.product_id, s.product_name, s.rate, i.quantity, i.unit_price, i.total_price FROM invoice_item i JOIN stock s ON i.product_id = s.product_id WHERE invoice_id = ?";
         try (PreparedStatement ps = con.prepareStatement(query)) {
             ps.setInt(1, invoiceId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -62,12 +82,18 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
     public JSONArray getAll() throws SQLException {
         Connection con = JdbcApp.getConnection();
         String query = "SELECT * FROM invoice";
-        try (Statement stmt = con.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                return JsonResultset.convertToJson(rs);
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                JSONArray invoiceJsonArray = JsonResultset.convertToJson(rs);
+                for (int i = 0; i < invoiceJsonArray.length(); i++) {
+                    JSONObject invoiceObject = invoiceJsonArray.getJSONObject(i);
+                    int invoiceId = invoiceObject.getInt("invoice_id");
+                    JSONArray items = invoiceRecord(invoiceId);
+                    invoiceObject.put("items", items);
+                }
+                return invoiceJsonArray;
             }
         }
-        return null;
     }
 
     @Override
@@ -76,7 +102,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         String query = "INSERT INTO invoice (customer_name, customer_contact, invoice_date, total_amount, discount, tax, grand_total, payment_status, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, invoice.getCustomerName());
-            stmt.setInt(2, invoice.getCustomer_contact());
+            stmt.setLong(2, invoice.getCustomer_contact());
             stmt.setDate(3, invoice.getInvoiceDate());
             stmt.setDouble(4, invoice.getTotalAmount());
             stmt.setDouble(5, invoice.getDiscount());
@@ -108,7 +134,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         String query = "UPDATE invoice SET customer_name = ?, customer_contact = ?, invoice_date = ?, total_amount = ?, discount = ?, tax = ?, grand_total = ?, payment_status = ?, payment_method = ?, notes = ? WHERE id = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, invoice.getCustomerName());
-            stmt.setInt(2, invoice.getCustomer_contact());
+            stmt.setLong(2, invoice.getCustomer_contact());
             stmt.setDate(3, invoice.getInvoiceDate());
             stmt.setDouble(4, invoice.getTotalAmount());
             stmt.setDouble(5, invoice.getDiscount());
@@ -133,10 +159,52 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
     }
 
     @Override
-    public InvoiceDto addInvoiceItems(JSONArray d, int invoice_id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'addInvoiceItems'");
+    public int[] addInvoiceItems(JSONArray d, int invoice_id) throws JSONException, SQLException {
+        Connection conn = JdbcApp.getConnection();
+        String sql = "INSERT INTO invoice_item (product_id, quantity, unit_price, total_price, invoice_id) VALUES (?, ?, ?, ?, ?)";
+        PreparedStatement stmt = conn.prepareStatement(sql);
+        conn.setAutoCommit(false);
+        for (int i = 0; i < d.length(); i++) {
+            updateStockDetails(d.getJSONObject(i).getInt("productId"), d.getJSONObject(i).getInt("quantity"));
+            stmt.setInt(1, d.getJSONObject(i).getInt("productId"));
+            stmt.setInt(2, d.getJSONObject(i).getInt("quantity"));
+            stmt.setDouble(3, d.getJSONObject(i).getDouble("price"));
+            stmt.setDouble(4, d.getJSONObject(i).getInt("quantity") * d.getJSONObject(i).getDouble("price"));
+            stmt.setInt(5, invoice_id);
+            stmt.addBatch();
+        }
+
+        int result[] = stmt.executeBatch();
+        conn.commit();
+        return result;
     }
+
+    public static void updateStockDetails(int productId, int quantity) throws SQLException {
+        String selectQuery = "SELECT quantity FROM stock WHERE product_id = ?";
+        String updateQuery = "UPDATE stock SET quantity = ? WHERE product_id = ?";
+    
+        try (Connection conn = JdbcApp.getConnection();
+             PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
+             PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+            selectStmt.setInt(1, productId);
+            ResultSet rs = selectStmt.executeQuery();
+    
+            if (rs.next()) {
+                int currentQuantity = rs.getInt("quantity");
+                int newQuantity = currentQuantity - quantity;
+    
+                if (newQuantity < 0) {
+                    throw new SQLException("Insufficient stock! Available: " + currentQuantity);
+                }
+                updateStmt.setInt(1, newQuantity);
+                updateStmt.setInt(2, productId);
+                updateStmt.executeUpdate();
+            } else {
+                throw new SQLException("Product not found with ID: " + productId);
+            }
+        }
+    }
+    
 
     @Override
     public InvoiceDto deleteInvoiceItems(InvoiceDto d) {
@@ -162,3 +230,6 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         throw new UnsupportedOperationException("Unimplemented method 'getInvoiceItems'");
     }
 }
+
+
+
