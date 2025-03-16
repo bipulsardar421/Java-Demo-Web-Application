@@ -182,17 +182,17 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
     public static void updateStockDetails(int productId, int quantity) throws SQLException {
         String selectQuery = "SELECT quantity FROM stock WHERE product_id = ?";
         String updateQuery = "UPDATE stock SET quantity = ? WHERE product_id = ?";
-    
+
         try (Connection conn = JdbcApp.getConnection();
-             PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
-             PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
+                PreparedStatement selectStmt = conn.prepareStatement(selectQuery);
+                PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
             selectStmt.setInt(1, productId);
             ResultSet rs = selectStmt.executeQuery();
-    
+
             if (rs.next()) {
                 int currentQuantity = rs.getInt("quantity");
                 int newQuantity = currentQuantity - quantity;
-    
+
                 if (newQuantity < 0) {
                     throw new SQLException("Insufficient stock! Available: " + currentQuantity);
                 }
@@ -202,6 +202,62 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
             } else {
                 throw new SQLException("Product not found with ID: " + productId);
             }
+        }
+    }
+
+    public JSONArray vendorBill() {
+        JSONArray js  = new JSONArray();;
+        String query = "SELECT " +
+                "i.item_id, " +
+                "i.invoice_id, " +
+                "u.user_name AS vendor, " +
+                "s.product_name, " +
+                "i.quantity, " +
+                "main_invoice.customer_name, " +
+                "main_invoice.customer_contact " +
+                "FROM " +
+                "invoice_item i " +
+                "JOIN stock s ON s.product_id = i.product_id " +
+                "JOIN user_details u ON u.user_id = s.vendor_id " +
+                "JOIN invoice main_invoice ON i.invoice_id = main_invoice.invoice_id";
+        try (Connection con = JdbcApp.getConnection();
+                PreparedStatement ps = con.prepareStatement(query);
+                ResultSet rs = ps.executeQuery()) {
+            js = JsonResultset.convertToJson(rs);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return js;
+    }
+    public JSONArray getVendorBill(int vendorId) {
+        String query = """
+                SELECT 
+                    i.item_id, 
+                    i.invoice_id, 
+                    u.user_name AS vendor, 
+                    s.product_name, 
+                    i.quantity, 
+                    main_invoice.customer_name, 
+                    main_invoice.customer_contact
+                FROM 
+                    invoice_item i
+                JOIN stock s ON s.product_id = i.product_id
+                JOIN user_details u ON u.user_id = s.vendor_id
+                JOIN invoice main_invoice ON i.invoice_id = main_invoice.invoice_id
+                WHERE s.vendor_id = ?
+                """;
+    
+        try (Connection connection = JdbcApp.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+    
+            preparedStatement.setInt(1, vendorId);
+    
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                return JsonResultset.convertToJson(resultSet);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return new JSONArray();
         }
     }
     
@@ -230,6 +286,3 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         throw new UnsupportedOperationException("Unimplemented method 'getInvoiceItems'");
     }
 }
-
-
-

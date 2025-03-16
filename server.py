@@ -2,8 +2,8 @@ import os
 import time
 import subprocess
 
-TOMCAT_HOME = r"C:\xampp\tomcat"
-# TOMCAT_HOME = r"G:\Download\apache-tomcat-9.0.99-windows-x64\apache-tomcat-9.0.99"
+# TOMCAT_HOME = r"C:\xampp\tomcat"
+TOMCAT_HOME = r"G:\Download\apache-tomcat-9.0.99-windows-x64\apache-tomcat-9.0.99"
 
 TOMCAT_BIN = os.path.join(TOMCAT_HOME, "bin")
 JAVA_HOME = r"C:\Program Files\Java\jdk-22"

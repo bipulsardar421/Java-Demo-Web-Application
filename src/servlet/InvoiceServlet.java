@@ -45,6 +45,8 @@ public class InvoiceServlet extends HttpServlet {
                     InvoiceServlet.updateInvoiceServlet(req, res);
                 case "/search" ->
                     InvoiceServlet.searchInvoiceServlet(req, res);
+                case "/vendor-bill" -> getVendorBillAll(req, res);
+                case "/vendor-bill-id" -> getVendorBillById(req, res);
                 default -> {
                     res.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     ResponseHandler.sendJsonResponse(res, "Error", "Invalid Request");
@@ -136,6 +138,29 @@ public class InvoiceServlet extends HttpServlet {
             f.printStackTrace();
         }
 
+    }
+
+    private static void getVendorBillAll(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        try {
+            InvoiceDao invoiceDao = new InvoiceDao();
+            JSONArray vendorBills = invoiceDao.vendorBill();
+            res.getWriter().println(vendorBills);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error fetching vendor bills", e);
+            ResponseHandler.sendJsonResponse(res, "error", "Failed to fetch vendor bills");
+        }
+    }
+
+    private static void getVendorBillById(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        try {
+            int vendorId = Integer.parseInt(req.getParameter("vendor_id"));
+            InvoiceDao invoiceDao = new InvoiceDao();
+            JSONArray vendorBills = invoiceDao.getVendorBill(vendorId);
+            res.getWriter().println(vendorBills);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error fetching vendor bill for vendor ID", e);
+            ResponseHandler.sendJsonResponse(res, "error", "Failed to fetch vendor bill");
+        }
     }
 
 }
