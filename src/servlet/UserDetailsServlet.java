@@ -57,21 +57,38 @@ public class UserDetailsServlet extends HttpServlet {
                     handleAddOrUpdateUser(request, response, path.equals("/update"));
                 case "/delete" ->
                     handleDeleteUser(request, response);
+                case "/checkUserName" -> checkUserName(request, response);
+                case "/checkPhone" -> checkPhone(request, response);
+
                 default -> {
                     response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-                    ResponseHandler.sendJsonResponse(response, "Error", "Invalid Request");
+                    ResponseHandler.sendJsonResponse(response, "error", "Invalid Request");
                 }
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Error processing request", e);
-            ResponseHandler.sendJsonResponse(response, "Error", "Internal Server Error");
+            LOGGER.log(Level.SEVERE, "error processing request", e);
+            ResponseHandler.sendJsonResponse(response, "error", "Internal Server error");
         }
+    }
+
+    private void checkUserName(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, SQLException {
+        String param = request.getParameter("name");
+        UserDetailsDao ud = new UserDetailsDao();
+        response.getWriter().println(ud.checkUsername(param));
+    }
+
+    private void checkPhone(HttpServletRequest request, HttpServletResponse response)
+            throws IOException, SQLException {
+        String param = request.getParameter("name");
+        UserDetailsDao ud = new UserDetailsDao();
+        response.getWriter().println(ud.checkPhone(param));
     }
 
     private void handleGetUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParam = request.getParameter("id");
         if (idParam == null) {
-            ResponseHandler.sendJsonResponse(response, "Error", "Missing 'id' parameter");
+            ResponseHandler.sendJsonResponse(response, "error", "Missing 'id' parameter");
             return;
         }
 
@@ -86,9 +103,9 @@ public class UserDetailsServlet extends HttpServlet {
                 ResponseHandler.sendJsonResponse(response, "empty", "New User", "code", "xvg1890");
             }
         } catch (NumberFormatException e) {
-            ResponseHandler.sendJsonResponse(response, "Error", "Invalid 'id' format");
+            ResponseHandler.sendJsonResponse(response, "error", "Invalid 'id' format");
         } catch (SQLException e) {
-            ResponseHandler.sendJsonResponse(response, "Error", e.getMessage());
+            ResponseHandler.sendJsonResponse(response, "error", e.getMessage());
         }
     }
 
@@ -99,7 +116,7 @@ public class UserDetailsServlet extends HttpServlet {
             int userId = Integer.parseInt(request.getParameter("user_id"));
             String username = Optional.ofNullable(request.getParameter("user_name"))
                     .orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
-            int phone = Integer.parseInt(request.getParameter("phone"));
+            String phone = request.getParameter("phone");
             String address = Optional.ofNullable(request.getParameter("address")).orElse("");
             String image = null;
             if (RequestHandler.isMultipart(request)) {
@@ -128,40 +145,40 @@ public class UserDetailsServlet extends HttpServlet {
             int result = isUpdate ? userDao.update(user) : userDao.insert(user);
 
             if (result > 0) {
-                ResponseHandler.sendJsonResponse(response, "Success",
+                ResponseHandler.sendJsonResponse(response, "success",
                         isUpdate ? "Updated Successfully" : "Added Successfully");
             } else {
-                ResponseHandler.sendJsonResponse(response, "Error", "Operation Failed");
+                ResponseHandler.sendJsonResponse(response, "error", "Operation Failed");
             }
         } catch (NumberFormatException e) {
-            ResponseHandler.sendJsonResponse(response, "Error", "Invalid number format in request parameters");
+            ResponseHandler.sendJsonResponse(response, "error", "Invalid number format in request parameters");
         } catch (IllegalArgumentException | SQLException e) {
-            ResponseHandler.sendJsonResponse(response, "Error", e.getMessage());
+            ResponseHandler.sendJsonResponse(response, "error", e.getMessage());
         }
     }
 
     private void handleDeleteUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParam = request.getParameter("id");
         if (idParam == null) {
-            ResponseHandler.sendJsonResponse(response, "Error", "Missing 'id' parameter");
+            ResponseHandler.sendJsonResponse(response, "error", "Missing 'id' parameter");
             return;
         }
 
         try {
             int id = Integer.parseInt(idParam);
-            UserDetailsDto user = new UserDetailsDto(id, 0, "", 0, "", "", "inactive",
+            UserDetailsDto user = new UserDetailsDto(id, 0, "", "", "", "", "inactive",
                     Timestamp.valueOf(LocalDateTime.now()));
             int result = userDao.delete(user);
 
             if (result > 0) {
-                ResponseHandler.sendJsonResponse(response, "Success", "User Deleted Successfully");
+                ResponseHandler.sendJsonResponse(response, "success", "User Deleted Successfully");
             } else {
-                ResponseHandler.sendJsonResponse(response, "Error", "Delete Operation Failed");
+                ResponseHandler.sendJsonResponse(response, "error", "Delete Operation Failed");
             }
         } catch (NumberFormatException e) {
-            ResponseHandler.sendJsonResponse(response, "Error", "Invalid 'id' format");
+            ResponseHandler.sendJsonResponse(response, "error", "Invalid 'id' format");
         } catch (SQLException e) {
-            ResponseHandler.sendJsonResponse(response, "Error", e.getMessage());
+            ResponseHandler.sendJsonResponse(response, "error", e.getMessage());
         }
     }
 }

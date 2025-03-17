@@ -31,7 +31,6 @@ public class SignUpServlet extends HttpServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String path = Optional.ofNullable(req.getPathInfo()).orElse("/register");
         res.setContentType("application/json");
-
         try {
             switch (path) {
                 case "/register" -> Signup(req, res);
@@ -52,7 +51,6 @@ public class SignUpServlet extends HttpServlet {
         String email = req.getParameter("email");
         String password = req.getParameter("password");
         String role = "client";
-
         if (email == null || password == null || email.trim().isEmpty() || password.trim().isEmpty()) {
             ResponseHandler.sendJsonResponse(res, "error", "All fields are required");
             return;
@@ -66,7 +64,10 @@ public class SignUpServlet extends HttpServlet {
             LoginDto newUser = new LoginDto(0, email.trim(), password, role);
 
             if (GenOtp(req, res)) {
-                req.getSession().setAttribute("pendingUser", newUser);
+
+                HttpSession newSession = req.getSession(true);
+                newSession.setAttribute("pendingUser", newUser);
+                newSession.setMaxInactiveInterval(5 * 60);
             }
         } catch (SQLException e) {
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
@@ -76,7 +77,7 @@ public class SignUpServlet extends HttpServlet {
     private boolean GenOtp(HttpServletRequest req, HttpServletResponse res) throws IOException, SQLException {
         String email = req.getParameter("email");
         LoginDao dao = new LoginDao();
-        String otp="";
+        String otp = "";
         if (email == null || email.trim().isEmpty()) {
             ResponseHandler.sendJsonResponse(res, "error", "Email is required");
             return false;
@@ -84,7 +85,7 @@ public class SignUpServlet extends HttpServlet {
 
         try {
             dao.deleteSignUpOtp(email, "");
-             otp = String.valueOf(100000 + new Random().nextInt(900000));
+            otp = String.valueOf(100000 + new Random().nextInt(900000));
             int otpSaved = dao.signUpOtp(email, otp);
 
             if (otpSaved > 0) {
@@ -116,6 +117,7 @@ public class SignUpServlet extends HttpServlet {
 
             if (isOtpValid) {
                 LoginDto pendingUser = (LoginDto) session.getAttribute("pendingUser");
+                System.out.println(pendingUser.getUsername());
                 if (pendingUser == null || !pendingUser.getUsername().equals(email)) {
                     ResponseHandler.sendJsonResponse(res, "error", "Session expired. Please sign up again.");
                     return;
@@ -123,8 +125,10 @@ public class SignUpServlet extends HttpServlet {
                 System.out.println(pendingUser.getPassword());
                 int userId = loginInterface.insert(pendingUser);
                 if (userId > 0) {
-                    session.setAttribute("verified", true);
-                    session.setAttribute("userName", email);
+                    session.setAttribute("authenticated", true);
+                    session.setAttribute("userId", userId);
+                    session.setAttribute("user", email);
+                    session.setAttribute("role", "client");
                     dao.deleteSignUpOtp(email, otp);
                     ResponseHandler.sendJsonResponse(res, "success", email, "user_id", userId + "");
                 } else {

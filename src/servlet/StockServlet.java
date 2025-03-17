@@ -109,7 +109,7 @@ public class StockServlet extends HttpServlet {
             stockDto stock = new stockDto(id, vendor_id, pname, qty, rate, recievedDate, image, "active");
             int result = isUpdate ? stInt.update(stock) : stInt.insert(stock);
             if (result > 0) {
-                ResponseHandler.sendJsonResponse(response, "Success",
+                ResponseHandler.sendJsonResponse(response, "success",
                         isUpdate ? "Updated Successfully" : "Added Successfully");
             } else {
                 ResponseHandler.sendJsonResponse(response, "Error", "Operation Failed");

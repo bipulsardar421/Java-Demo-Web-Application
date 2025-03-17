@@ -7,7 +7,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import controller.JdbcApp;
 import dao.interfaces.ReportInterface;
@@ -16,51 +15,58 @@ import handler.resultset_handler.JsonResultset;
 public class ReportDao implements ReportInterface {
 
     @Override
-    public JSONArray generateReport(Date startDate, Date endDate) throws SQLException {
+    public JSONArray getReports(Date startDate, Date endDate, String role, int userId) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String sql = "WITH InvoiceData AS (  SELECT invoice_id  FROM invoice where invoice_date between ? and ?), ItemQuantity AS (  SELECT ii.product_id, SUM(ii.quantity) AS total_quantity  FROM invoice_item ii  JOIN InvoiceData i ON ii.invoice_id = i.invoice_id  GROUP BY ii.product_id), MaxProduct AS (  SELECT product_id, total_quantity  FROM ItemQuantity  ORDER BY total_quantity DESC  LIMIT 1)SELECT   s.product_name,   mp.product_id,   mp.total_quantity FROM stock s JOIN MaxProduct mp ON s.product_id = mp.product_id";
+        String sql = "";
+
+        switch (role.toLowerCase()) {
+            case "client" -> sql = getClientReportQuery();
+            case "vendor" -> sql = getVendorReportQuery();
+            case "admin" -> sql = getAdminReportQuery();
+        }
+
         PreparedStatement ps = con.prepareStatement(sql);
         ps.setDate(1, startDate);
         ps.setDate(2, endDate);
+        if (!role.equalsIgnoreCase("admin")) {
+            ps.setInt(3, userId);
+        }
+
         ResultSet rs = ps.executeQuery();
         return JsonResultset.convertToJson(rs);
     }
 
-    public JSONObject getCombinedReport(Date startDate, Date endDate) throws SQLException {
-        JSONObject combinedResult = new JSONObject();
-
-        JSONArray reportData = generateReport(startDate, endDate);
-        JSONArray maxInvoiceData = getMaxGeneratedInvoice(startDate, endDate);
-        JSONArray maxCustomerData = getMaxCustomer();
-
-        combinedResult.put("reportData", reportData);
-        combinedResult.put("maxCustomerData", maxCustomerData);
-        combinedResult.put("maxInvoiceData", maxInvoiceData);
-
-        return combinedResult;
+    private String getClientReportQuery() {
+        return """
+                    SELECT i.invoice_id, i.invoice_date, p.product_name, ii.quantity, ii.total_price
+                    FROM invoice i
+                    JOIN invoice_item ii ON i.invoice_id = ii.invoice_id
+                    JOIN stock p ON ii.product_id = p.product_id
+                    JOIN user_details u ON i.customer_name = u.user_name
+                    WHERE i.invoice_date BETWEEN ? AND ?
+                    AND u.user_id = ?
+                """;
     }
 
-    public JSONArray getMaxCustomer() throws SQLException {
-        Connection con = JdbcApp.getConnection();
-        String sql = "SELECT customer_name, COUNT(invoice_id) AS invoice_count FROM invoice GROUP BY customer_name ORDER BY invoice_count DESC LIMIT 1";
-        PreparedStatement ps = con.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery();
-        return JsonResultset.convertToJson(rs);
+    private String getVendorReportQuery() {
+        return """
+                    SELECT p.product_name, ii.quantity, ii.total_price, i.invoice_date
+                    FROM invoice_item ii
+                    JOIN invoice i ON ii.invoice_id = i.invoice_id
+                    JOIN stock p ON ii.product_id = p.product_id
+                    WHERE p.vendor_id = ?
+                    AND i.invoice_date BETWEEN ? AND ?
+                """;
     }
 
-    public JSONArray getMaxGeneratedInvoice(Date starDate, Date enDate) throws SQLException {
-        Connection con = JdbcApp.getConnection();
-        String sql = "SELECT invoice_date, COUNT(invoice_id) AS total_invoices \n" + //
-                "FROM invoice \n" + //
-                "WHERE invoice_date BETWEEN ? AND ? \n" + //
-                "GROUP BY invoice_date \n" + //
-                "ORDER BY total_invoices DESC \n" + //
-                "LIMIT 1;";
-        PreparedStatement ps = con.prepareStatement(sql);
-        ps.setDate(1, starDate);
-        ps.setDate(2, enDate);
-        ResultSet rs = ps.executeQuery();
-        return JsonResultset.convertToJson(rs);
+    private String getAdminReportQuery() {
+        return """
+                    SELECT i.invoice_id, u.user_name AS customer_name, p.product_name, ii.quantity, ii.total_price, i.invoice_date
+                    FROM invoice i
+                    JOIN invoice_item ii ON i.invoice_id = ii.invoice_id
+                    JOIN stock p ON ii.product_id = p.product_id
+                    JOIN user_details u ON i.customer_name = u.user_name
+                    WHERE i.invoice_date BETWEEN ? AND ?
+                """;
     }
-
 }

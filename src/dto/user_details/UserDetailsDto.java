@@ -8,14 +8,14 @@ public class UserDetailsDto {
     int id;
     int user_id;
     String user_name;
-    int phone;
+    String phone;
     String address;
     String image;
     String status;
     Timestamp updatedAt;
     ResultSet rs;
 
-    public UserDetailsDto(int id, int user_id, String user_name, int phone, String address, String image, String status,
+    public UserDetailsDto(int id, int user_id, String user_name, String phone, String address, String image, String status,
             Timestamp updatedAt) {
         this.id = id;
         this.user_id = user_id;
@@ -47,11 +47,11 @@ public class UserDetailsDto {
         this.user_name = user_name;
     }
 
-    public int getPhone() {
+    public String getPhone() {
         return phone;
     }
 
-    public void setPhone(int phone) {
+    public void setPhone(String phone) {
         this.phone = phone;
     }
 

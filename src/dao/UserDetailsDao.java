@@ -7,6 +7,8 @@ import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import org.json.JSONArray;
+import org.json.JSONObject;
+
 import controller.JdbcApp;
 import dao.interfaces.UserDetailsInterface;
 import dto.user_details.UserDetailsDto;
@@ -64,7 +66,7 @@ public class UserDetailsDao implements UserDetailsInterface {
         String qry = "UPDATE user_details SET user_name = ?, phone = ?, address = ?, image = ?, status = ?, updatedAt = ? WHERE id = ?";
         PreparedStatement ps = con.prepareStatement(qry);
         ps.setString(1, t.getUser_name());
-        ps.setInt(2, t.getPhone());
+        ps.setString(2, t.getPhone() + "");
         ps.setString(3, t.getAddress());
         ps.setString(4, t.getImage());
         ps.setString(5, t.getStatus());
@@ -100,5 +102,44 @@ public class UserDetailsDao implements UserDetailsInterface {
     public int save(UserDetailsDto t) throws SQLException {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'save'");
+    }
+
+    public JSONArray checkUsername(String username) throws SQLException {
+        String query = "SELECT user_name FROM user_details WHERE user_name = ?";
+        JSONArray resultArray = new JSONArray();
+
+        try (Connection con = JdbcApp.getConnection();
+                PreparedStatement ps = con.prepareStatement(query)) {
+
+            ps.setString(1, username);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("user_name", rs.getString("user_name"));
+                    resultArray.put(obj);
+                }
+            }
+        }
+        return resultArray;
+    }
+    public JSONArray checkPhone(String username) throws SQLException {
+        String query = "SELECT phone FROM user_details WHERE phone = ?";
+        JSONArray resultArray = new JSONArray();
+
+        try (Connection con = JdbcApp.getConnection();
+                PreparedStatement ps = con.prepareStatement(query)) {
+
+            ps.setString(1, username);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    JSONObject obj = new JSONObject();
+                    obj.put("phone", rs.getString("phone"));
+                    resultArray.put(obj);
+                }
+            }
+        }
+        return resultArray;
     }
 }
