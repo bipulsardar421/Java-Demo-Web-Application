@@ -49,7 +49,7 @@ public class UserDetailsDao implements UserDetailsInterface {
         String qry = "INSERT INTO user_details (user_name, phone, address, image, status, updatedAt, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
         PreparedStatement ps = con.prepareStatement(qry);
         ps.setString(1, t.getUser_name());
-        ps.setInt(2, t.getPhone());
+        ps.setString(2, t.getPhone() + "");
         ps.setString(3, t.getAddress());
         ps.setString(4, t.getImage());
         ps.setString(5, t.getStatus());
