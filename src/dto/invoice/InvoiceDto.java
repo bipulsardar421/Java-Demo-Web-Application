@@ -7,6 +7,16 @@ import java.util.List;
 public class InvoiceDto {
 
     private int id;
+    private int client_id;
+
+    public int getClient_id() {
+        return client_id;
+    }
+
+    public void setClient_id(int client_id) {
+        this.client_id = client_id;
+    }
+
     private String customerName;
     private String customer_contact;
     private Date invoiceDate;
@@ -31,10 +41,12 @@ public class InvoiceDto {
         this.stock = stock;
     }
 
-    public InvoiceDto(int id, String customerName, String customer_contact, Date invoiceDate, double totalAmount,
+    public InvoiceDto(int id, int client_id, String customerName, String customer_contact, Date invoiceDate,
+            double totalAmount,
             double discount, double tax, double grand_total, String payment_status, String paymentMethod,
             String notes) {
         this.id = id;
+        this.client_id = client_id;
         this.customerName = customerName;
         this.customer_contact = customer_contact;
         this.invoiceDate = invoiceDate;

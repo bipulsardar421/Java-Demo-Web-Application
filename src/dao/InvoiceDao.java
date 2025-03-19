@@ -99,7 +99,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
     @Override
     public int save(InvoiceDto invoice) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        String query = "INSERT INTO invoice (customer_name, customer_contact, invoice_date, total_amount, discount, tax, grand_total, payment_status, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO invoice ( customer_name, customer_contact, invoice_date, total_amount, discount, tax, grand_total, payment_status, payment_method, notes, client_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)";
         try (PreparedStatement stmt = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, invoice.getCustomerName());
             stmt.setString(2, invoice.getCustomer_contact());
@@ -111,6 +111,8 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
             stmt.setString(8, invoice.getPayment_status());
             stmt.setString(9, invoice.getPaymentMethod());
             stmt.setString(10, invoice.getNotes());
+            stmt.setInt(11, invoice.getClient_id());
+
             int affectedRows = stmt.executeUpdate();
             if (affectedRows > 0) {
                 try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
@@ -206,7 +208,8 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
     }
 
     public JSONArray vendorBill() {
-        JSONArray js  = new JSONArray();;
+        JSONArray js = new JSONArray();
+        ;
         String query = "SELECT " +
                 "i.item_id, " +
                 "i.invoice_id, " +
@@ -229,29 +232,30 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         }
         return js;
     }
+
     public JSONArray getVendorBill(int vendorId) {
         String query = """
-                SELECT 
-                    i.item_id, 
-                    i.invoice_id, 
-                    u.user_name AS vendor, 
-                    s.product_name, 
-                    i.quantity, 
-                    main_invoice.customer_name, 
+                SELECT
+                    i.item_id,
+                    i.invoice_id,
+                    u.user_name AS vendor,
+                    s.product_name,
+                    i.quantity,
+                    main_invoice.customer_name,
                     main_invoice.customer_contact
-                FROM 
+                FROM
                     invoice_item i
                 JOIN stock s ON s.product_id = i.product_id
                 JOIN user_details u ON u.user_id = s.vendor_id
                 JOIN invoice main_invoice ON i.invoice_id = main_invoice.invoice_id
                 WHERE s.vendor_id = ?
                 """;
-    
+
         try (Connection connection = JdbcApp.getConnection();
-             PreparedStatement preparedStatement = connection.prepareStatement(query)) {
-    
+                PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+
             preparedStatement.setInt(1, vendorId);
-    
+
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 return JsonResultset.convertToJson(resultSet);
             }
@@ -260,7 +264,6 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
             return new JSONArray();
         }
     }
-    
 
     @Override
     public InvoiceDto deleteInvoiceItems(InvoiceDto d) {

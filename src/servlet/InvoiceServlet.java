@@ -89,6 +89,7 @@ public class InvoiceServlet extends HttpServlet {
 
     private static void addInvoice(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String jsonObject = req.getParameter("cartData");
+        int client_id = Integer.parseInt(req.getParameter("customer_id"));
         String customerName = req.getParameter("customer_name");
         String customerContact = req.getParameter("customer_contact");
         Date invoiceDate = Date.valueOf(req.getParameter("invoice_date"));
@@ -100,7 +101,7 @@ public class InvoiceServlet extends HttpServlet {
         String paymentMethod = req.getParameter("payment_method");
         String notes = req.getParameter("notes");
 
-        InvoiceDto invDto = new InvoiceDto(0, customerName, customerContact, invoiceDate, totalAmount,
+        InvoiceDto invDto = new InvoiceDto(0, client_id, customerName, customerContact, invoiceDate, totalAmount,
                 discount, tax, grandTotal, paymentStatus, paymentMethod, notes);
         try {
             int id = invInterface.save(invDto);

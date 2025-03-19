@@ -103,4 +103,10 @@ public class UserDetailsDto {
         this.id = id;
     }
 
+    @Override
+    public String toString() {
+        return "UserDetailsDto [id=" + id + ", user_id=" + user_id + ", user_name=" + user_name + ", phone=" + phone
+                + ", address=" + address + ", image=" + image + ", status=" + status + ", updatedAt=" + updatedAt + "]";
+    }
+
 }

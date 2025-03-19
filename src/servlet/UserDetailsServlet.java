@@ -51,8 +51,6 @@ public class UserDetailsServlet extends HttpServlet {
             switch (path) {
                 case "/view" ->
                     response.getWriter().println(userDao.getAll());
-                case "/clients" ->
-                    response.getWriter().println(new UserDetailsDao().getAllClients());
                 case "/get" ->
                     handleGetUser(request, response);
                 case "/add", "/update" ->
@@ -112,56 +110,85 @@ public class UserDetailsServlet extends HttpServlet {
     }
 
     private void handleAddOrUpdateUser(HttpServletRequest request, HttpServletResponse response, boolean isUpdate)
-            throws IOException, ServletException {
-        try {
-            int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
-            Object userIdObj = request.getAttribute("user_id");
-            int userId = 0;
-            if (userIdObj != null) {
-                userId = Integer.parseInt(userIdObj.toString());
-            }
-            String username = Optional.ofNullable(request.getParameter("name"))
-                    .orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
-            String phone = request.getParameter("phone");
-            String address = Optional.ofNullable(request.getParameter("address")).orElse("");
-            String image = null;
-            if (RequestHandler.isMultipart(request)) {
-                Part filePart = request.getPart("image");
+        throws IOException, ServletException {
+    try {
+        System.out.println("handleAddOrUpdateUser called. isUpdate: " + isUpdate);
 
-                if (filePart != null && filePart.getSize() > 0 && filePart.getSubmittedFileName() != null) {
-                    if (isUpdate) {
-                        UserDetailsDao sd = new UserDetailsDao();
-                        String imageName = sd.getImageName(id);
-                        UploadHandler.deleteFile(imageName, getServletContext());
-                    }
-                    image = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
-                } else {
-                    String existingImage = request.getParameter("image");
-                    if (existingImage != null && !existingImage.isEmpty()) {
-                        image = existingImage;
-                    }
-                }
-            } else {
-                image = request.getParameter("image");
-            }
-            String status = Optional.ofNullable(request.getParameter("status")).orElse("active");
+        int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
+        System.out.println("Parsed user ID: " + id);
 
-            UserDetailsDto user = new UserDetailsDto(id, userId, username, phone, address, image, status,
-                    Timestamp.valueOf(LocalDateTime.now()));
-            int result = isUpdate ? userDao.update(user) : userDao.insert(user);
-
-            if (result > 0) {
-                ResponseHandler.sendJsonResponse(response, "success",
-                        isUpdate ? "Updated Successfully" : "Added Successfully");
-            } else {
-                ResponseHandler.sendJsonResponse(response, "error", "Operation Failed");
-            }
-        } catch (NumberFormatException e) {
-            ResponseHandler.sendJsonResponse(response, "error", "Invalid number format in request parameters");
-        } catch (IllegalArgumentException | SQLException e) {
-            ResponseHandler.sendJsonResponse(response, "error", e.getMessage());
+        Object userIdObj = request.getAttribute("user_id");
+        int userId = 0;
+        if (userIdObj != null) {
+            userId = Integer.parseInt(userIdObj.toString());
         }
+        System.out.println("User ID from request attribute: " + userId);
+
+        String username = Optional.ofNullable(request.getParameter("name"))
+                .orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
+        System.out.println("Parsed username: " + username);
+
+        String phone = request.getParameter("phone");
+        System.out.println("Parsed phone: " + phone);
+
+        String address = Optional.ofNullable(request.getParameter("address")).orElse("");
+        System.out.println("Parsed address: " + address);
+
+        String image = null;
+        
+        if (RequestHandler.isMultipart(request)) {
+            System.out.println("Request is multipart. Checking for image upload.");
+            Part filePart = request.getPart("image");
+
+            if (filePart != null && filePart.getSize() > 0 && filePart.getSubmittedFileName() != null) {
+                System.out.println("Image file detected: " + filePart.getSubmittedFileName());
+
+                if (isUpdate) {
+                    UserDetailsDao sd = new UserDetailsDao();
+                    String imageName = sd.getImageName(id);
+                    System.out.println("Existing image: " + imageName);
+                    UploadHandler.deleteFile(imageName, getServletContext());
+                }
+                image = UploadHandler.uploadFile(UPLOAD_DIR, request, getServletContext());
+                System.out.println("Uploaded new image: " + image);
+            } else {
+                String existingImage = request.getParameter("image");
+                if (existingImage != null && !existingImage.isEmpty()) {
+                    image = existingImage;
+                    System.out.println("Using existing image: " + image);
+                }
+            }
+        } else {
+            image = request.getParameter("image");
+            System.out.println("Non-multipart request. Using existing image: " + image);
+        }
+
+        String status = Optional.ofNullable(request.getParameter("status")).orElse("active");
+        System.out.println("Parsed status: " + status);
+
+        UserDetailsDto user = new UserDetailsDto(id, userId, username, phone, address, image, status,
+                Timestamp.valueOf(LocalDateTime.now()));
+        System.out.println("User object created: " + user);
+
+        int result = isUpdate ? userDao.update(user) : userDao.insert(user);
+        System.out.println("Database operation result: " + result);
+
+        if (result > 0) {
+            System.out.println(isUpdate ? "User updated successfully" : "User added successfully");
+            ResponseHandler.sendJsonResponse(response, "success",
+                    isUpdate ? "Updated Successfully" : "Added Successfully");
+        } else {
+            System.out.println("Database operation failed");
+            ResponseHandler.sendJsonResponse(response, "error", "Operation Failed");
+        }
+    } catch (NumberFormatException e) {
+        System.out.println("Number format exception: " + e.getMessage());
+        ResponseHandler.sendJsonResponse(response, "error", "Invalid number format in request parameters");
+    } catch (IllegalArgumentException | SQLException e) {
+        System.out.println("Exception occurred: " + e.getMessage());
+        ResponseHandler.sendJsonResponse(response, "error", e.getMessage());
     }
+}
 
     private void handleDeleteUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String idParam = request.getParameter("id");
