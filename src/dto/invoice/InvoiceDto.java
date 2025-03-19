@@ -8,7 +8,7 @@ public class InvoiceDto {
 
     private int id;
     private String customerName;
-    private long customer_contact;
+    private String customer_contact;
     private Date invoiceDate;
     private double totalAmount;
     private double discount;
@@ -31,7 +31,7 @@ public class InvoiceDto {
         this.stock = stock;
     }
 
-    public InvoiceDto(int id, String customerName, long customer_contact, Date invoiceDate, double totalAmount,
+    public InvoiceDto(int id, String customerName, String customer_contact, Date invoiceDate, double totalAmount,
             double discount, double tax, double grand_total, String payment_status, String paymentMethod,
             String notes) {
         this.id = id;
@@ -63,11 +63,11 @@ public class InvoiceDto {
         this.customerName = customerName;
     }
 
-    public long getCustomer_contact() {
+    public String getCustomer_contact() {
         return customer_contact;
     }
 
-    public void setCustomer_contact(long customer_contact) {
+    public void setCustomer_contact(String customer_contact) {
         this.customer_contact = customer_contact;
     }
 

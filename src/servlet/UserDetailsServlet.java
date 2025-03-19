@@ -51,6 +51,8 @@ public class UserDetailsServlet extends HttpServlet {
             switch (path) {
                 case "/view" ->
                     response.getWriter().println(userDao.getAll());
+                case "/clients" ->
+                    response.getWriter().println(new UserDetailsDao().getAllClients());
                 case "/get" ->
                     handleGetUser(request, response);
                 case "/add", "/update" ->
@@ -113,8 +115,12 @@ public class UserDetailsServlet extends HttpServlet {
             throws IOException, ServletException {
         try {
             int id = isUpdate ? Integer.parseInt(request.getParameter("id")) : 0;
-            int userId = Integer.parseInt(request.getParameter("user_id"));
-            String username = Optional.ofNullable(request.getParameter("user_name"))
+            Object userIdObj = request.getAttribute("user_id");
+            int userId = 0;
+            if (userIdObj != null) {
+                userId = Integer.parseInt(userIdObj.toString());
+            }
+            String username = Optional.ofNullable(request.getParameter("name"))
                     .orElseThrow(() -> new IllegalArgumentException("Missing 'user_name'"));
             String phone = request.getParameter("phone");
             String address = Optional.ofNullable(request.getParameter("address")).orElse("");

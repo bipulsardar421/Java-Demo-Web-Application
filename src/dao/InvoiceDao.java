@@ -102,7 +102,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         String query = "INSERT INTO invoice (customer_name, customer_contact, invoice_date, total_amount, discount, tax, grand_total, payment_status, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement stmt = con.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, invoice.getCustomerName());
-            stmt.setLong(2, invoice.getCustomer_contact());
+            stmt.setString(2, invoice.getCustomer_contact());
             stmt.setDate(3, invoice.getInvoiceDate());
             stmt.setDouble(4, invoice.getTotalAmount());
             stmt.setDouble(5, invoice.getDiscount());
@@ -134,7 +134,7 @@ public class InvoiceDao implements InvoiceInterface, InvoiceItemInterface<Invoic
         String query = "UPDATE invoice SET customer_name = ?, customer_contact = ?, invoice_date = ?, total_amount = ?, discount = ?, tax = ?, grand_total = ?, payment_status = ?, payment_method = ?, notes = ? WHERE id = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, invoice.getCustomerName());
-            stmt.setLong(2, invoice.getCustomer_contact());
+            stmt.setString(2, invoice.getCustomer_contact());
             stmt.setDate(3, invoice.getInvoiceDate());
             stmt.setDouble(4, invoice.getTotalAmount());
             stmt.setDouble(5, invoice.getDiscount());

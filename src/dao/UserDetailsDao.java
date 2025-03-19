@@ -45,6 +45,15 @@ public class UserDetailsDao implements UserDetailsInterface {
         return JsonResultset.convertToJson(rs);
     }
 
+    public JSONArray getAllClients() throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String qry = "SELECT * FROM user_details WHERE status = 'active' and user_id in (select id from login where role = 'client' and status ='active')";
+        PreparedStatement ps = con.prepareStatement(qry);
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
+    }
+
+
     @Override
     public int insert(UserDetailsDto t) throws SQLException {
         Connection con = JdbcApp.getConnection();

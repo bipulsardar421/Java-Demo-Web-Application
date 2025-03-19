@@ -90,7 +90,7 @@ public class InvoiceServlet extends HttpServlet {
     private static void addInvoice(HttpServletRequest req, HttpServletResponse res) throws IOException {
         String jsonObject = req.getParameter("cartData");
         String customerName = req.getParameter("customer_name");
-        long customerContact = Long.parseLong(req.getParameter("customer_contact"));
+        String customerContact = req.getParameter("customer_contact");
         Date invoiceDate = Date.valueOf(req.getParameter("invoice_date"));
         double totalAmount = Double.parseDouble(req.getParameter("total_amount"));
         double discount = Double.parseDouble(req.getParameter("discount"));
