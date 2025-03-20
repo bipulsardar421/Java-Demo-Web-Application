@@ -217,6 +217,10 @@ public class LoginServlet extends HttpServlet {
             if (result > 0) {
                 int settingValue = dao.save(user);
                 if (settingValue > 0) {
+                    session.removeAttribute("isNew");
+                    user = dao.get(userId);
+                    boolean isNew = user.getIsNew() == 1;
+                    session.setAttribute("isNew", isNew);
                     ResponseHandler.sendJsonResponse(res, "success", "Password updated successfully");
                 }
             } else {

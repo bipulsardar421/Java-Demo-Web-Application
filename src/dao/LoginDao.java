@@ -167,7 +167,7 @@ public class LoginDao implements LoginInterface {
     @Override
     public int save(LoginDto t) throws SQLException {
         Connection con = JdbcApp.getConnection();
-        PreparedStatement ps = con.prepareStatement("update login set new = 0 where id = ?");
+        PreparedStatement ps = con.prepareStatement("update login set isNew = 0 where id = ?");
         ps.setInt(1, t.getId());
         return ps.executeUpdate();
     }
@@ -180,8 +180,20 @@ public class LoginDao implements LoginInterface {
 
     @Override
     public LoginDto get(int id) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'get'");
+        Connection con = JdbcApp.getConnection();
+        LoginDto ld = null;
+        String qry = "Select id, username, password, role, isNew from login where id = ?";
+        PreparedStatement ps = con.prepareStatement(qry);
+        ps.setInt(1, id);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            int oid = rs.getInt("id");
+            String uname = rs.getString("username");
+            String pwd = rs.getString("password");
+            String role = rs.getString("role");
+            ld = new LoginDto(oid, uname, pwd, role, rs.getInt("isNew"));
+        }
+        return ld;
     }
 
     @Override

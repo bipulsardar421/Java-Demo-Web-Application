@@ -63,6 +63,8 @@ public class SessionCheckServlet extends HttpServlet {
     private static void getIsNew(HttpServletRequest req, HttpServletResponse res) throws IOException {
         HttpSession session = req.getSession(false);
         if (session != null && session.getAttribute("isNew") != null) {
+            Object isNewObj = session.getAttribute("isNew");
+            LOGGER.info("isNew type: " + isNewObj.getClass().getName() + ", value: " + isNewObj);
             boolean isNew = (boolean) session.getAttribute("isNew");
             ResponseHandler.sendJsonResponse(res, "true", "authenticated", "isNew", isNew + "");
         } else {
