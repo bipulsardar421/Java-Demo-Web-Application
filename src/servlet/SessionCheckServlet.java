@@ -27,6 +27,7 @@ public class SessionCheckServlet extends HttpServlet {
             switch (path) {
                 case "/check" -> checkSession(req, res);
                 case "/getId" -> getUserId(req, res);
+                case "/isNew" -> getIsNew(req, res);
                 case "/logout" -> logoutSession(req, res);
                 default -> {
                     res.setStatus(HttpServletResponse.SC_NOT_FOUND);
@@ -59,6 +60,15 @@ public class SessionCheckServlet extends HttpServlet {
         }
     }
 
+    private static void getIsNew(HttpServletRequest req, HttpServletResponse res) throws IOException {
+        HttpSession session = req.getSession(false);
+        if (session != null && session.getAttribute("isNew") != null) {
+            boolean isNew = (boolean) session.getAttribute("isNew");
+            ResponseHandler.sendJsonResponse(res, "true", "authenticated", "isNew", isNew + "");
+        } else {
+            ResponseHandler.sendJsonResponse(res, "false", "not_authenticated");
+        }
+    }
     private static void logoutSession(HttpServletRequest req, HttpServletResponse res) throws IOException {
         HttpSession session = req.getSession(false);
         if (session != null) {

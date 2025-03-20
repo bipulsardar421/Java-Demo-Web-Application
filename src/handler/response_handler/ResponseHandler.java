@@ -23,7 +23,8 @@ public class ResponseHandler {
         }
     }
 
-    public static void sendJsonResponse(HttpServletResponse response, String status, String message) throws IOException {
+    public static void sendJsonResponse(HttpServletResponse response, String status, String message)
+            throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         JSONObject jsonResponse = new JSONObject();
@@ -33,7 +34,9 @@ public class ResponseHandler {
             out.println(jsonResponse.toString());
         }
     }
-    public static void sendJsonResponse(HttpServletResponse response, String status, JSONArray data) throws IOException {
+
+    public static void sendJsonResponse(HttpServletResponse response, String status, JSONArray data)
+            throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         JSONObject jsonResponse = new JSONObject();
@@ -44,7 +47,20 @@ public class ResponseHandler {
         }
     }
 
-    public static void sendJsonResponse(HttpServletResponse response, String status, String message, String extraKey, String extraValue) throws IOException {
+    public static void sendJsonResponse(HttpServletResponse response, String status, JSONObject data)
+            throws IOException {
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        JSONObject jsonResponse = new JSONObject();
+        jsonResponse.put("status", status);
+        jsonResponse.put("data", data);
+        try (PrintWriter out = response.getWriter()) {
+            out.println(jsonResponse.toString());
+        }
+    }
+
+    public static void sendJsonResponse(HttpServletResponse response, String status, String message, String extraKey,
+            String extraValue) throws IOException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         JSONObject jsonResponse = new JSONObject();

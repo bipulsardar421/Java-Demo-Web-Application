@@ -12,7 +12,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
 import org.json.JSONArray;
 import dao.InvoiceDao;
@@ -36,7 +35,7 @@ public class InvoiceServlet extends HttpServlet {
                 case "/invoice" ->
                     InvoiceServlet.getInvoice(req, res);
                 case "/iamAdmin" ->
-                    InvoiceServlet.getAll(req, res);
+                    res.getWriter().println(invInterface.getAll());
                 case "/gen-invoice" ->
                     InvoiceServlet.genInvoice(req, res);
                 case "/add" ->
@@ -66,21 +65,6 @@ public class InvoiceServlet extends HttpServlet {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-    }
-
-    private static void getAll(HttpServletRequest req, HttpServletResponse res) throws IOException {
-        HttpSession session = req.getSession(false);
-        if (session == null || !"admin".equals(session.getAttribute("role"))) {
-            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            res.getWriter().write("{\"error\": \"Unauthorized access\"}");
-            return;
-        }
-        try {
-            res.getWriter().println(invInterface.getAll());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
     }
 
     private static void genInvoice(HttpServletRequest req, HttpServletResponse res) throws IOException {

@@ -10,6 +10,15 @@ public class LoginDto {
     String username;
     String password;
     String role;
+    int isNew;
+
+    public LoginDto(int id, String username, String password, String role, int isNew) {
+        this.id = id;
+        this.username = username;
+        this.password = password;
+        this.role = role;
+        this.isNew = isNew;
+    }
 
     public LoginDto(int id, String username, String password, String role) {
         this.id = id;
@@ -61,6 +70,14 @@ public class LoginDto {
     @Override
     public String toString() {
         return "LoginDto [id=" + id + ", username=" + username + ", password=" + password + ", role=" + role + "]";
+    }
+
+    public int getIsNew() {
+        return isNew;
+    }
+
+    public void setIsNew(int isNew) {
+        this.isNew = isNew;
     }
 
 }

@@ -1,7 +1,6 @@
 package servlet;
 
 import java.io.IOException;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.util.Optional;
 import java.util.logging.Level;
@@ -14,15 +13,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import dao.ReportDao;
-import dao.interfaces.ReportInterface;
 import handler.response_handler.ResponseHandler;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 @MultipartConfig()
 @WebServlet("/report/*")
 public class ReportServlet extends HttpServlet {
 
     private static final Logger LOGGER = Logger.getLogger(ReportServlet.class.getName());
-    private static final ReportInterface reportDao = new ReportDao();
+    private ReportDao reportDao;
+
+    @Override
+    public void init() {
+        // Initialize ReportDao once when servlet starts
+        reportDao = new ReportDao();
+    }
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse res) throws IOException {
@@ -32,7 +38,7 @@ public class ReportServlet extends HttpServlet {
 
         try {
             switch (path) {
-                case "/generate" -> handleGenerateReport(req, res);
+                case "/generate" -> handleGenerateAllReports(req, res);
                 default -> {
                     res.setStatus(HttpServletResponse.SC_NOT_FOUND);
                     ResponseHandler.sendJsonResponse(res, "error", "Invalid API Endpoint");
@@ -40,42 +46,49 @@ public class ReportServlet extends HttpServlet {
             }
         } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error processing report", e);
+            res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             ResponseHandler.sendJsonResponse(res, "error", "Internal Server Error");
         }
     }
 
     /**
-     * Handles report generation for Client, Vendor, and Admin.
+     * Handles generation of all reports (Stock, Vendor, and all Invoice types) in a single JSON object.
      */
-    private void handleGenerateReport(HttpServletRequest req, HttpServletResponse res) throws IOException {
+    private void handleGenerateAllReports(HttpServletRequest req, HttpServletResponse res) throws IOException {
         try {
-            Date startDate = Date.valueOf(req.getParameter("start"));
-            Date endDate = Date.valueOf(req.getParameter("end"));
-            String role = Optional.ofNullable(req.getParameter("role")).orElse("");
-            int userId = Integer.parseInt(req.getParameter("userId"));
+            // Extract parameters from request
+            String startDate = req.getParameter("startDate"); 
+            String endDate = req.getParameter("endDate");
 
-            if (!isValidRole(role)) {
-                ResponseHandler.sendJsonResponse(res, "error", "Invalid User Role");
+            // Validate parameters
+            if (startDate == null || endDate == null) {
+                res.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                ResponseHandler.sendJsonResponse(res, "error", "Missing required parameters: startDate, endDate");
                 return;
             }
 
-            var reportData = reportDao.getReports(startDate, endDate, role, userId);
-            ResponseHandler.sendJsonResponse(res, "success", reportData);
+            // Create a single JSONObject to hold all reports
+            JSONObject allReports = new JSONObject();
 
-        } catch (IllegalArgumentException e) {
-            ResponseHandler.sendJsonResponse(res, "error", "Invalid Date Format");
+            // Fetch all reports
+            JSONArray stockReport = reportDao.getStockReport(startDate, endDate);
+            JSONArray vendorReport = reportDao.getVendorReport(startDate, endDate);
+            JSONArray dateWiseInvoiceReport = reportDao.getDateWiseInvoiceReport(startDate, endDate);
+            JSONArray clientWiseInvoiceReport = reportDao.getClientWiseInvoiceReport(startDate, endDate);
+            JSONArray productWiseInvoiceReport = reportDao.getProductWiseInvoiceReport(startDate, endDate);
+
+            // Add each report to the main JSONObject
+            allReports.put("stock_report", stockReport);
+            allReports.put("vendor_report", vendorReport);
+            allReports.put("invoice_date_report", dateWiseInvoiceReport);
+            allReports.put("invoice_client_report", clientWiseInvoiceReport);
+            allReports.put("invoice_product_report", productWiseInvoiceReport);
+            ResponseHandler.sendJsonResponse(res, "success",  allReports);
+
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error while fetching report", e);
-            ResponseHandler.sendJsonResponse(res, "error", "Server Issue");
+            LOGGER.log(Level.SEVERE, "Database error while generating reports", e);
+            res.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
         }
-    }
-
-    /**
-     * Validates the user role.
-     */
-    private boolean isValidRole(String role) {
-        return role.equalsIgnoreCase("client") ||
-               role.equalsIgnoreCase("vendor") ||
-               role.equalsIgnoreCase("admin");
     }
 }

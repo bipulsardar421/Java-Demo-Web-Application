@@ -20,17 +20,16 @@ public class LoginDao implements LoginInterface {
     public LoginDto getByName(String name) throws SQLException {
         Connection con = JdbcApp.getConnection();
         LoginDto ld = null;
-        String qry = "Select id, username, password, role from login where username = ?";
+        String qry = "Select id, username, password, role, isNew from login where username = ?";
         PreparedStatement ps = con.prepareStatement(qry);
         ps.setString(1, name);
         ResultSet rs = ps.executeQuery();
         if (rs.next()) {
-
             int oid = rs.getInt("id");
             String uname = rs.getString("username");
             String pwd = rs.getString("password");
             String role = rs.getString("role");
-            ld = new LoginDto(oid, uname, pwd, role);
+            ld = new LoginDto(oid, uname, pwd, role, rs.getInt("isNew"));
         }
         return ld;
     }
@@ -167,8 +166,10 @@ public class LoginDao implements LoginInterface {
 
     @Override
     public int save(LoginDto t) throws SQLException {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'save'");
+        Connection con = JdbcApp.getConnection();
+        PreparedStatement ps = con.prepareStatement("update login set new = 0 where id = ?");
+        ps.setInt(1, t.getId());
+        return ps.executeUpdate();
     }
 
     @Override
@@ -198,7 +199,7 @@ public class LoginDao implements LoginInterface {
         String query = "UPDATE login SET role=? WHERE id=?";
         Connection con = null;
         try {
-            con = JdbcApp.getConnection(); 
+            con = JdbcApp.getConnection();
             con.setAutoCommit(false);
             try (PreparedStatement pstmt = con.prepareStatement(query)) {
                 for (int i = 0; i < jdata.length(); i++) {
@@ -225,6 +226,5 @@ public class LoginDao implements LoginInterface {
             }
         }
     }
-    
 
 }

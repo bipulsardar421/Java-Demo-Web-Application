@@ -44,6 +44,7 @@ public class LoginServlet extends HttpServlet {
                 case "/gen-otp" -> LoginServlet.GenOtp(req, res);
                 case "/match-otp" -> LoginServlet.MatchOtp(req, res);
                 case "/change-pwd" -> LoginServlet.ChangePwd(req, res);
+                case "/reset-pwd" -> LoginServlet.ResetPwd(req, res);
                 case "/get-users" -> LoginServlet.getUsers(req, res);
                 case "/edit-role" -> LoginServlet.editUserRole(req, res);
                 default -> {
@@ -140,10 +141,12 @@ public class LoginServlet extends HttpServlet {
             boolean isOtpValid = dao.checkOtp(user.getId(), otp);
 
             if (isOtpValid) {
+                boolean isNew = user.getIsNew() == 1;
                 session.setAttribute("authenticated", true);
                 session.setAttribute("userId", user.getId());
                 session.setAttribute("user", user.getUsername());
                 session.setAttribute("role", user.getRole());
+                session.setAttribute("isNew", isNew);
 
                 dao.deleteLoginOtp(user.getId());
                 if ("login".equalsIgnoreCase(operation)) {
@@ -188,6 +191,41 @@ public class LoginServlet extends HttpServlet {
         } catch (SQLException e) {
             ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
         }
+    }
+
+    private static void ResetPwd(HttpServletRequest req, HttpServletResponse res) throws IOException, SQLException {
+        HttpSession session = req.getSession(false);
+        Integer userId = (Integer) session.getAttribute("userId");
+        boolean isAuthenticated = Boolean.TRUE.equals(session.getAttribute("authenticated"));
+
+        if (userId == null || !isAuthenticated) {
+            ResponseHandler.sendJsonResponse(res, "error", "Session expired or unauthorized");
+            return;
+        }
+
+        String newPwd = req.getParameter("new_pwd");
+        if (newPwd == null || newPwd.trim().isEmpty()) {
+            ResponseHandler.sendJsonResponse(res, "error", "New password is required");
+            return;
+        }
+
+        try {
+            LoginDao dao = new LoginDao();
+            LoginDto user = new LoginDto(userId, "", LoginHelper.hashString(newPwd), "");
+
+            int result = dao.update(user);
+            if (result > 0) {
+                int settingValue = dao.save(user);
+                if (settingValue > 0) {
+                    ResponseHandler.sendJsonResponse(res, "success", "Password updated successfully");
+                }
+            } else {
+                ResponseHandler.sendJsonResponse(res, "error", "Failed to update password");
+            }
+        } catch (SQLException e) {
+            ResponseHandler.sendJsonResponse(res, "error", "Database error: " + e.getMessage());
+        }
+
     }
 
     private static void getUsers(HttpServletRequest req, HttpServletResponse res) throws SQLException, IOException {
