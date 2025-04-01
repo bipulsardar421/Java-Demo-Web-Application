@@ -12,3 +12,5 @@ cd ..\..\
 
 
 python -u ".\server.py"
+
+@REM server.bat

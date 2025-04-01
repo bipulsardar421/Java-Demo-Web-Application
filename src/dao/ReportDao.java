@@ -1,76 +1,3 @@
-// package dao;
-
-// import java.sql.Connection;
-// import java.sql.Date;
-// import java.sql.PreparedStatement;
-// import java.sql.ResultSet;
-// import java.sql.SQLException;
-
-// import org.json.JSONArray;
-
-// import controller.JdbcApp;
-// import dao.interfaces.ReportInterface;
-// import handler.resultset_handler.JsonResultset;
-
-// public class ReportDao implements ReportInterface {
-
-//     @Override
-//     public JSONArray getReports(Date startDate, Date endDate, String role, int userId) throws SQLException {
-//         Connection con = JdbcApp.getConnection();
-//         String sql = "";
-
-//         switch (role.toLowerCase()) {
-//             case "client" -> sql = getClientReportQuery();
-//             case "vendor" -> sql = getVendorReportQuery();
-//             case "admin" -> sql = getAdminReportQuery();
-//         }
-
-//         PreparedStatement ps = con.prepareStatement(sql);
-//         ps.setDate(1, startDate);
-//         ps.setDate(2, endDate);
-//         if (!role.equalsIgnoreCase("admin")) {
-//             ps.setInt(3, userId);
-//         }
-
-//         ResultSet rs = ps.executeQuery();
-//         return JsonResultset.convertToJson(rs);
-//     }
-
-//     private String getClientReportQuery() {
-//         return """
-//                     SELECT i.invoice_id, i.invoice_date, p.product_name, ii.quantity, ii.total_price
-//                     FROM invoice i
-//                     JOIN invoice_item ii ON i.invoice_id = ii.invoice_id
-//                     JOIN stock p ON ii.product_id = p.product_id
-//                     JOIN user_details u ON i.customer_name = u.user_name
-//                     WHERE i.invoice_date BETWEEN ? AND ?
-//                     AND u.user_id = ?
-//                 """;
-//     }
-
-//     private String getVendorReportQuery() {
-//         return """
-//                     SELECT p.product_name, ii.quantity, ii.total_price, i.invoice_date
-//                     FROM invoice_item ii
-//                     JOIN invoice i ON ii.invoice_id = i.invoice_id
-//                     JOIN stock p ON ii.product_id = p.product_id
-//                     WHERE p.vendor_id = ?
-//                     AND i.invoice_date BETWEEN ? AND ?
-//                 """;
-//     }
-
-//     private String getAdminReportQuery() {
-//         return """
-//                     SELECT i.invoice_id, u.user_name AS customer_name, p.product_name, ii.quantity, ii.total_price, i.invoice_date
-//                     FROM invoice i
-//                     JOIN invoice_item ii ON i.invoice_id = ii.invoice_id
-//                     JOIN stock p ON ii.product_id = p.product_id
-//                     JOIN user_details u ON i.customer_name = u.user_name
-//                     WHERE i.invoice_date BETWEEN ? AND ?
-//                 """;
-//     }
-// }
-
 package dao;
 
 import java.sql.Connection;
@@ -79,194 +6,144 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.json.JSONArray;
-import org.json.JSONObject;
 
 import controller.JdbcApp;
+import handler.resultset_handler.JsonResultset;
 
 public class ReportDao {
 
-    // 1. Stock Report
-    public JSONArray getStockReport(String startDate, String endDate) throws SQLException {
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        JSONArray stockArray = new JSONArray();
-        try {
-            con = JdbcApp.getConnection();
-            String query = "SELECT s.product_id, s.product_name, s.quantity AS stock_on_hand, s.rate, " +
-                          "s.recieved_date, v.vendor_name AS supplier " +
-                          "FROM stock s " +
-                          "LEFT JOIN vendors v ON s.vendor_id = v.vendor_id " +
-                          "WHERE s.recieved_date BETWEEN ? AND ? AND s.status = 'active' " +
-                          "ORDER BY s.recieved_date, s.product_name";
-            ps = con.prepareStatement(query);
-            ps.setString(1, startDate);
-            ps.setString(2, endDate);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                JSONObject stockJson = new JSONObject();
-                stockJson.put("product_id", rs.getInt("product_id"));
-                stockJson.put("product_name", rs.getString("product_name"));
-                stockJson.put("stock_on_hand", rs.getInt("stock_on_hand"));
-                stockJson.put("rate", rs.getDouble("rate"));
-                stockJson.put("recieved_date", rs.getDate("recieved_date").toString());
-                stockJson.put("supplier", rs.getString("supplier"));
-                stockArray.put(stockJson);
-            }
-        } finally {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (con != null) con.close();
-        }
-        return stockArray;
+    // Existing methods (unchanged)
+    public JSONArray getStockReport(String productName, String date) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        StringBuilder query = new StringBuilder(
+            "SELECT product_id, product_name, quantity AS stock_on_hand, rate, recieved_date AS received_date, vendor_id, status " +
+            "FROM stock WHERE status = 'active'"
+        );
+        if (productName != null && !productName.isEmpty()) query.append(" AND product_name LIKE ?");
+        if (date != null && !date.isEmpty()) query.append(" AND recieved_date = ?");
+        query.append(" ORDER BY recieved_date DESC");
+
+        PreparedStatement ps = con.prepareStatement(query.toString());
+        int paramIndex = 1;
+        if (productName != null && !productName.isEmpty()) ps.setString(paramIndex++, "%" + productName + "%");
+        if (date != null && !date.isEmpty()) ps.setString(paramIndex++, date);
+
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
     }
 
-    // 2. Vendor Report
-    public JSONArray getVendorReport(String startDate, String endDate) throws SQLException {
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        JSONArray vendorArray = new JSONArray();
-        try {
-            con = JdbcApp.getConnection();
-            String query = "SELECT v.vendor_id, v.vendor_name, v.contact_person, v.phone, " +
-                          "s.product_name, s.quantity AS supplied_quantity, s.rate, s.recieved_date " +
-                          "FROM vendors v " +
-                          "LEFT JOIN stock s ON v.vendor_id = s.vendor_id " +
-                          "WHERE s.recieved_date BETWEEN ? AND ? AND s.status = 'active' " +
-                          "ORDER BY v.vendor_name, s.recieved_date";
-            ps = con.prepareStatement(query);
-            ps.setString(1, startDate);
-            ps.setString(2, endDate);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                JSONObject vendorJson = new JSONObject();
-                vendorJson.put("vendor_id", rs.getInt("vendor_id"));
-                vendorJson.put("vendor_name", rs.getString("vendor_name"));
-                vendorJson.put("contact_person", rs.getString("contact_person"));
-                vendorJson.put("phone", rs.getString("phone"));
-                vendorJson.put("product_name", rs.getString("product_name"));
-                vendorJson.put("supplied_quantity", rs.getInt("supplied_quantity"));
-                vendorJson.put("rate", rs.getDouble("rate"));
-                vendorJson.put("recieved_date", rs.getDate("recieved_date").toString());
-                vendorArray.put(vendorJson);
-            }
-        } finally {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (con != null) con.close();
-        }
-        return vendorArray;
+    public JSONArray getVendorReport(String vendorName) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        StringBuilder query = new StringBuilder(
+            "SELECT v.vendor_id, v.vendor_name, v.contact_person, v.phone, " +
+            "s.product_id, s.product_name, s.quantity, s.rate, s.recieved_date AS received_date " +
+            "FROM vendors v " +
+            "LEFT JOIN stock s ON v.vendor_id = s.vendor_id " +
+            "WHERE s.status = 'active'"
+        );
+        if (vendorName != null && !vendorName.isEmpty()) query.append(" AND v.vendor_name LIKE ?");
+        query.append(" ORDER BY v.vendor_name, s.recieved_date DESC");
+
+        PreparedStatement ps = con.prepareStatement(query.toString());
+        if (vendorName != null && !vendorName.isEmpty()) ps.setString(1, "%" + vendorName + "%");
+
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
     }
 
-    // 3.1. Date-Wise Invoice Report
-    public JSONArray getDateWiseInvoiceReport(String startDate, String endDate) throws SQLException {
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        JSONArray invoiceArray = new JSONArray();
-        try {
-            con = JdbcApp.getConnection();
-            String query = "SELECT i.invoice_date, COUNT(i.invoice_id) AS invoice_count, " +
-                          "SUM(i.grand_total) AS total_amount, i.payment_status, " +
-                          "GROUP_CONCAT(i.invoice_id) AS invoice_ids " +
-                          "FROM invoice i " +
-                          "WHERE i.invoice_date BETWEEN ? AND ? " +
-                          "GROUP BY i.invoice_date, i.payment_status " +
-                          "ORDER BY i.invoice_date";
-            ps = con.prepareStatement(query);
-            ps.setString(1, startDate);
-            ps.setString(2, endDate);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                JSONObject invoiceJson = new JSONObject();
-                invoiceJson.put("invoice_date", rs.getDate("invoice_date").toString());
-                invoiceJson.put("invoice_count", rs.getInt("invoice_count"));
-                invoiceJson.put("total_amount", rs.getDouble("total_amount"));
-                invoiceJson.put("payment_status", rs.getString("payment_status"));
-                invoiceJson.put("invoice_ids", rs.getString("invoice_ids"));
-                invoiceArray.put(invoiceJson);
-            }
-        } finally {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (con != null) con.close();
-        }
-        return invoiceArray;
+    public JSONArray getInvoiceReport(String date, String clientName, String productName) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        StringBuilder query = new StringBuilder(
+            "SELECT i.invoice_id, i.invoice_date, c.client_id, c.client_name, i.customer_name, i.customer_contact, " +
+            "ii.product_id, s.product_name, ii.quantity, ii.unit_price, ii.total_price, " +
+            "i.total_amount, i.discount, i.tax, i.grand_total, i.payment_status, i.payment_method, i.notes " +
+            "FROM invoice i " +
+            "JOIN clients c ON i.client_id = c.client_id " +
+            "JOIN invoice_item ii ON i.invoice_id = ii.invoice_id " +
+            "JOIN stock s ON ii.product_id = s.product_id " +
+            "WHERE 1=1"
+        );
+        if (date != null && !date.isEmpty()) query.append(" AND i.invoice_date = ?");
+        if (clientName != null && !clientName.isEmpty()) query.append(" AND c.client_name LIKE ?");
+        if (productName != null && !productName.isEmpty()) query.append(" AND s.product_name LIKE ?");
+        query.append(" ORDER BY i.invoice_date DESC, c.client_name, s.product_name");
+
+        PreparedStatement ps = con.prepareStatement(query.toString());
+        int paramIndex = 1;
+        if (date != null && !date.isEmpty()) ps.setString(paramIndex++, date);
+        if (clientName != null && !clientName.isEmpty()) ps.setString(paramIndex++, "%" + clientName + "%");
+        if (productName != null && !productName.isEmpty()) ps.setString(paramIndex++, "%" + productName + "%");
+
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
     }
 
-    // 3.2. Client-Wise Invoice Report
-    public JSONArray getClientWiseInvoiceReport(String startDate, String endDate) throws SQLException {
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        JSONArray invoiceArray = new JSONArray();
-        try {
-            con = JdbcApp.getConnection();
-            String query = "SELECT c.client_id, c.client_name, COUNT(i.invoice_id) AS invoice_count, " +
-                          "SUM(i.grand_total) AS total_amount, i.payment_status, " +
-                          "GROUP_CONCAT(i.invoice_id) AS invoice_ids " +
-                          "FROM invoice i " +
-                          "LEFT JOIN clients c ON i.client_id = c.client_id " +
-                          "WHERE i.invoice_date BETWEEN ? AND ? " +
-                          "GROUP BY c.client_id, c.client_name, i.payment_status " +
-                          "ORDER BY c.client_name";
-            ps = con.prepareStatement(query);
-            ps.setString(1, startDate);
-            ps.setString(2, endDate);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                JSONObject invoiceJson = new JSONObject();
-                invoiceJson.put("client_id", rs.getInt("client_id"));
-                invoiceJson.put("client_name", rs.getString("client_name") != null ? rs.getString("client_name") : "Unknown");
-                invoiceJson.put("invoice_count", rs.getInt("invoice_count"));
-                invoiceJson.put("total_amount", rs.getDouble("total_amount"));
-                invoiceJson.put("payment_status", rs.getString("payment_status"));
-                invoiceJson.put("invoice_ids", rs.getString("invoice_ids"));
-                invoiceArray.put(invoiceJson);
-            }
-        } finally {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (con != null) con.close();
-        }
-        return invoiceArray;
+    // New methods for additional reports
+
+    // 1. All Stock
+    public JSONArray getAllStock() throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String query = "SELECT product_id, product_name, quantity AS stock_on_hand, rate, recieved_date AS received_date, vendor_id " +
+                       "FROM stock WHERE status = 'active' ORDER BY product_name";
+        PreparedStatement ps = con.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
     }
 
-    // 3.3. Product-Wise Invoice Report
-    public JSONArray getProductWiseInvoiceReport(String startDate, String endDate) throws SQLException {
-        Connection con = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        JSONArray invoiceArray = new JSONArray();
-        try {
-            con = JdbcApp.getConnection();
-            String query = "SELECT s.product_id, s.product_name, SUM(ii.quantity) AS total_quantity_sold, " +
-                          "SUM(ii.total_price) AS total_amount, COUNT(DISTINCT ii.invoice_id) AS invoice_count " +
-                          "FROM invoice_item ii " +
-                          "JOIN invoice i ON ii.invoice_id = i.invoice_id " +
-                          "JOIN stock s ON ii.product_id = s.product_id " +
-                          "WHERE i.invoice_date BETWEEN ? AND ? " +
-                          "GROUP BY s.product_id, s.product_name " +
-                          "ORDER BY s.product_name";
-            ps = con.prepareStatement(query);
+    // 2. All Vendors and What They Supplied (Product-wise Totals)
+    public JSONArray getAllVendorsSupplied() throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String query = "SELECT v.vendor_id, v.vendor_name, s.product_id, s.product_name, " +
+                       "SUM(s.quantity) AS total_supplied " +
+                       "FROM vendors v " +
+                       "LEFT JOIN stock s ON v.vendor_id = s.vendor_id " +
+                       "WHERE s.status = 'active' " +
+                       "GROUP BY v.vendor_id, v.vendor_name, s.product_id, s.product_name " +
+                       "ORDER BY v.vendor_name, s.product_name";
+        PreparedStatement ps = con.prepareStatement(query);
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
+    }
+
+    // 3. Customers with Invoices in a Date Range
+    public JSONArray getCustomersByDateRange(String startDate, String endDate) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        String query = "SELECT COUNT(DISTINCT i.client_id) AS customer_count, " +
+                       "c.client_id, c.client_name " +
+                       "FROM invoice i " +
+                       "JOIN clients c ON i.client_id = c.client_id " +
+                       "WHERE i.invoice_date BETWEEN ? AND ? " +
+                       "GROUP BY c.client_id, c.client_name " +
+                       "ORDER BY c.client_name";
+        PreparedStatement ps = con.prepareStatement(query);
+        ps.setString(1, startDate);
+        ps.setString(2, endDate);
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
+    }
+
+    // 4. Most Sold Product (Optionally within a Date Range)
+    public JSONArray getMostSoldProduct(String startDate, String endDate) throws SQLException {
+        Connection con = JdbcApp.getConnection();
+        StringBuilder query = new StringBuilder(
+            "SELECT ii.product_id, s.product_name, SUM(ii.quantity) AS total_sold " +
+            "FROM invoice_item ii " +
+            "JOIN stock s ON ii.product_id = s.product_id " +
+            "JOIN invoice i ON ii.invoice_id = i.invoice_id " +
+            "WHERE 1=1"
+        );
+        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
+            query.append(" AND i.invoice_date BETWEEN ? AND ?");
+        }
+        query.append(" GROUP BY ii.product_id, s.product_name " +
+                     "ORDER BY total_sold DESC LIMIT 1");
+
+        PreparedStatement ps = con.prepareStatement(query.toString());
+        if (startDate != null && !startDate.isEmpty() && endDate != null && !endDate.isEmpty()) {
             ps.setString(1, startDate);
             ps.setString(2, endDate);
-            rs = ps.executeQuery();
-            while (rs.next()) {
-                JSONObject invoiceJson = new JSONObject();
-                invoiceJson.put("product_id", rs.getInt("product_id"));
-                invoiceJson.put("product_name", rs.getString("product_name"));
-                invoiceJson.put("total_quantity_sold", rs.getInt("total_quantity_sold"));
-                invoiceJson.put("total_amount", rs.getDouble("total_amount"));
-                invoiceJson.put("invoice_count", rs.getInt("invoice_count"));
-                invoiceArray.put(invoiceJson);
-            }
-        } finally {
-            if (rs != null) rs.close();
-            if (ps != null) ps.close();
-            if (con != null) con.close();
         }
-        return invoiceArray;
+        ResultSet rs = ps.executeQuery();
+        return JsonResultset.convertToJson(rs);
     }
 }
