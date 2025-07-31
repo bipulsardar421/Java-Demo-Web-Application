@@ -2,12 +2,33 @@ import os
 import time
 import subprocess
 
+#You Can Change this  |
+#                     v
 TOMCAT_HOME = r"C:\xampp\tomcat"
-# TOMCAT_HOME = r"G:\Download\apache-tomcat-9.0.99-windows-x64\apache-tomcat-9.0.99"
+#
+# Set Tomcat home variable to the current Tomcat Directory, P.S. Here Do not keep your project directory.
+#
 
 TOMCAT_BIN = os.path.join(TOMCAT_HOME, "bin")
-JAVA_HOME = r"C:\Program Files\Java\jdk-22"
 
+#You Can Change this  |
+#                     v
+JAVA_HOME = r"C:\Program Files\Java\jdk-22"
+#
+# Set Java home variable to the current Java JDK Directory, P.S. Here Do not keep your project directory.
+
+
+#******************************************************************************************************#
+#******************************************************************************************************#
+#******************************************************************************************************#
+#******************************************************************************************************#
+#******************************************************************************************************#
+#******************************************************************************************************#
+#******************************************************************************************************#
+
+
+
+# After this point keep everything as it is.
 START_TOMCAT_CMD = os.path.join(TOMCAT_BIN, "catalina.bat start")
 STOP_TOMCAT_CMD = os.path.join(TOMCAT_BIN, "catalina.bat stop")
 
